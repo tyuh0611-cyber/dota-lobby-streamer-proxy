@@ -16,3 +16,4 @@
 ./PROJECT_FILES.txt
 ./README.md
 ./requirements.txt
+./scripts/install_streamer_proxy.sh
