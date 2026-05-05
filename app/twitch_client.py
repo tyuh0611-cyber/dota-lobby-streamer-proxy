@@ -1,5 +1,6 @@
 from urllib.parse import urlencode
 import httpx
+from fastapi import HTTPException, status
 from .config import settings
 from .env_writer import update_env_values
 from .schemas import Chatter
@@ -29,7 +30,26 @@ class TwitchClient:
         }
         async with httpx.AsyncClient(timeout=20.0) as client:
             response = await client.post(f'{self.auth_base_url}/token', data=payload)
-            response.raise_for_status()
+            if response.status_code >= 400:
+                error_text = response.text
+                print(
+                    'TWITCH_TOKEN_ERROR',
+                    response.status_code,
+                    error_text,
+                    'redirect_uri=',
+                    settings.effective_twitch_redirect_uri,
+                    flush=True,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail={
+                        'error': 'twitch_token_exchange_failed',
+                        'twitch_status_code': response.status_code,
+                        'twitch_response': error_text,
+                        'redirect_uri': settings.effective_twitch_redirect_uri,
+                    },
+                )
+
             data = response.json()
         update_env_values({
             'TWITCH_ACCESS_TOKEN': data.get('access_token'),
