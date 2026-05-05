@@ -7,22 +7,28 @@ class Settings(BaseSettings):
     app_host: str = '0.0.0.0'
     app_port: int = 8081
     public_base_url: str = 'http://localhost:8081'
-    proxy_api_key: str
-    allowed_client_ip: str | None = None
-
-    twitch_client_id: str | None = None
-    twitch_client_secret: str | None = None
-    twitch_access_token: str | None = None
-    twitch_refresh_token: str | None = None
-    twitch_broadcaster_id: str | None = None
-    twitch_moderator_id: str | None = None
     twitch_redirect_uri: str = ''
-    twitch_scopes: str = 'moderator:read:chatters'
+
+    proxy_api_key: str = 'change_me_long_random_value'
+    allowed_client_ip: str = ''
+
+    twitch_client_id: str = ''
+    twitch_client_secret: str = ''
+    twitch_access_token: str = ''
+    twitch_refresh_token: str = ''
+    twitch_broadcaster_id: str = ''
+    twitch_moderator_id: str = ''
 
     dota_mock_mode: bool = True
-    steam_username: str | None = None
-    steam_password: str | None = None
-    steam_shared_secret: str | None = None
+    steam_username: str = ''
+    steam_password: str = ''
+    steam_shared_secret: str = ''
+
+    @property
+    def effective_twitch_redirect_uri(self) -> str:
+        if self.twitch_redirect_uri:
+            return self.twitch_redirect_uri
+        return f'{self.public_base_url.rstrip("/")}/twitch/callback'
 
 
 settings = Settings()
