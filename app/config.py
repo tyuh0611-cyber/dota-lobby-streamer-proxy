@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     app_port: int = 8081
     public_base_url: str = 'http://localhost:8081'
     twitch_redirect_uri: str = ''
+    post_twitch_auth_redirect_url: str = ''
 
     proxy_api_key: str = 'change_me_long_random_value'
     allowed_client_ip: str = ''
