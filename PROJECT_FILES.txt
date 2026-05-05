@@ -1,13 +1,4 @@
-./README.md
 ./docs/AI_NOTES.md
 ./docs/project_context.md
-
-# After code migration, regenerate this file on the streamer server:
-# find . -type f \
-#   -not -path './.git/*' \
-#   -not -path './.venv/*' \
-#   -not -path './venv/*' \
-#   -not -path './__pycache__/*' \
-#   -not -name '.env' \
-#   -not -name '*.pyc' \
-#   | sort > PROJECT_FILES.txt
+./PROJECT_FILES.txt
+./README.md
