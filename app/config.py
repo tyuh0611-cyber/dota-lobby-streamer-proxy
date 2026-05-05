@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     twitch_refresh_token: str = ''
     twitch_broadcaster_id: str = ''
     twitch_moderator_id: str = ''
+    twitch_scopes: str = 'moderator:read:chatters'
 
     dota_mock_mode: bool = True
     steam_username: str = ''
