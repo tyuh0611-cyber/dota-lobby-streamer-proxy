@@ -23,9 +23,19 @@ async def twitch_callback(code: str = Query(...)) -> dict:
     result = await twitch_client.exchange_code(code)
     return {
         'ok': True,
-        'message': 'Twitch tokens saved to .env. Restart streamer-proxy now.',
+        'message': 'Twitch tokens and user ids saved to .env. Restart streamer-proxy now.',
         'result': result,
     }
+
+
+@app.get('/twitch/me', dependencies=[Depends(require_proxy_key)])
+async def twitch_me() -> dict:
+    return await twitch_client.get_me()
+
+
+@app.post('/twitch/setup', dependencies=[Depends(require_proxy_key)])
+async def twitch_setup() -> dict:
+    return await twitch_client.setup_current_user_ids()
 
 
 @app.get('/chatters', dependencies=[Depends(require_proxy_key)])

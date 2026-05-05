@@ -132,3 +132,16 @@ Callback routing is confirmed working because /twitch/callback reaches FastAPI a
 The next step is to restart streamer-proxy, generate a new Twitch auth URL, authorize again, and read the exact TWITCH_TOKEN_ERROR line from journald.
 
 Important: Twitch OAuth code is one-time use. Do not retry an old callback URL.
+
+## Twitch setup automation
+
+Twitch OAuth now aims to be fully automatic for streamer setup:
+
+- `/twitch/callback` saves access/refresh tokens.
+- `/twitch/callback` also tries to read `/helix/users` and save streamer numeric user id.
+- `/twitch/me` returns the current authorized Twitch user.
+- `/twitch/setup` saves `TWITCH_BROADCASTER_ID` and `TWITCH_MODERATOR_ID` from the authorized Twitch user.
+- `/chatters` reports Twitch API errors with explicit diagnostics.
+- If access token is expired, streamer proxy attempts refresh through `TWITCH_REFRESH_TOKEN`.
+
+If `/chatters` returns `503 twitch_token_refreshed_restart_streamer_proxy`, restart `streamer-proxy` so settings are reloaded from `.env`.
