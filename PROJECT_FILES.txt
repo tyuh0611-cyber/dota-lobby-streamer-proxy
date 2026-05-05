@@ -1,4 +1,14 @@
+./app/config.py
+./app/dota_adapter.py
+./app/env_writer.py
+./app/main.py
+./app/public_url.py
+./app/schemas.py
+./app/security.py
+./app/twitch_client.py
 ./docs/AI_NOTES.md
 ./docs/project_context.md
+./.env.example
 ./PROJECT_FILES.txt
 ./README.md
+./requirements.txt
