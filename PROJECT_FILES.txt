@@ -9,6 +9,7 @@
 ./docs/AI_NOTES.md
 ./docs/project_context.md
 ./.env.example
+./.gitignore
 ./PROJECT_FILES.txt
 ./README.md
 ./requirements.txt
