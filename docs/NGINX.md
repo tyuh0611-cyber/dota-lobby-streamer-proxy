@@ -32,8 +32,8 @@ systemctl reload nginx
 ## Test callback routing
 
 ```bash
-curl -i "http://test.raze1x6.mom/twitch/callback?code=test"
-journalctl -u streamer-proxy -n 50 --no-pager
+curl -i "https://test.raze1x6.mom/twitch/callback?code=test"
+journalctl -u streamer-proxy -n 80 --no-pager
 ```
 
 Expected streamer-proxy log contains:
@@ -52,13 +52,21 @@ That error confirms nginx routing and FastAPI callback handling work. It does no
 
 ## Current verified server state
 
-As of 2026-05-05, the public callback route reaches streamer proxy successfully:
+As of 2026-05-05, the HTTPS public callback route reaches streamer proxy successfully:
 
 ```text
+TWITCH_TOKEN_ERROR 400 {"status":400,"message":"Invalid authorization code"}
+redirect_uri= https://test.raze1x6.mom/twitch/callback
 89.127.214.228:0 - "GET /twitch/callback?code=test HTTP/1.1" 502 Bad Gateway
 ```
 
 The `502` is produced by the app because `code=test` is intentionally invalid for Twitch token exchange.
+
+## Certbot / HTTPS state
+
+Certbot has been run for `test.raze1x6.mom`, and HTTPS callback testing has reached `streamer-proxy`.
+
+The next step after HTTPS verification is to generate a fresh Twitch auth URL from `/twitch/auth-url`, authorize in the browser, and let Twitch redirect to the HTTPS callback with a real one-time `code`.
 
 ## HTTPS note
 
