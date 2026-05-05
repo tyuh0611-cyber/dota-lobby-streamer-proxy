@@ -6,8 +6,10 @@
 ./app/schemas.py
 ./app/security.py
 ./app/twitch_client.py
+./deploy/nginx/dota-lobby-streamer-proxy.conf
 ./docs/AI_NOTES.md
 ./docs/CURRENT_STATUS.md
+./docs/NGINX.md
 ./docs/project_context.md
 ./.env.example
 ./.gitignore
