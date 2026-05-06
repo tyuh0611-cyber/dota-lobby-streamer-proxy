@@ -53,6 +53,11 @@ async def dota_status() -> dict:
     return await dota_adapter.get_status()
 
 
+@app.post('/dota/connect', dependencies=[Depends(require_proxy_key)])
+async def dota_connect() -> dict:
+    return await dota_adapter.connect()
+
+
 @app.get('/dota/lobby', dependencies=[Depends(require_proxy_key)])
 async def dota_lobby() -> dict:
     lobby = await dota_adapter.get_lobby()
