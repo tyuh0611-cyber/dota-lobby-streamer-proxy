@@ -41,6 +41,8 @@ class RealDotaAdapter:
         self.last_gc_result: str | None = None
         self.last_gc_error: str | None = None
         self.last_invite_attempts: list[dict] = []
+        self.last_create_lobby_result: str | None = None
+        self.last_create_lobby_error: str | None = None
         self._client: Any | None = None
         self._dota: Any | None = None
 
@@ -87,6 +89,9 @@ class RealDotaAdapter:
             'last_gc_result': self.last_gc_result,
             'last_gc_error': self.last_gc_error,
             'last_invite_attempts': self.last_invite_attempts,
+            'last_create_lobby_result': self.last_create_lobby_result,
+            'last_create_lobby_error': self.last_create_lobby_error,
+            'lobby_detected': self._dota.lobby is not None if self._dota else False,
             'dota_methods': self._public_methods(self._dota),
             'steam_methods': self._public_methods(self._client),
         }
@@ -220,6 +225,57 @@ class RealDotaAdapter:
 
         self.last_gc_error = 'no_launch_method_found:' + ','.join(self._public_methods(self._dota))
         print('DOTA_GC_LAUNCH_ERROR', self.last_gc_error, flush=True)
+
+    async def create_lobby(self, password: str = "", lobby_name: str = "Dota Lobby") -> dict:
+        if not self.connected:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={'error': 'steam_not_connected', 'message': 'Call /dota/connect first.'},
+            )
+
+        if not self._dota:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={'error': 'dota_client_not_initialized'})
+
+        options = {
+            'game_name': lobby_name,
+            'server_region': 3,
+            'game_mode': 2,
+            'allow_cheats': False,
+            'fill_with_bots': False,
+            'allow_spectating': True,
+            'pass_key': password or '',
+        }
+
+        try:
+            result = await asyncio.to_thread(self._dota.create_practice_lobby, password or '', options)
+            self.last_create_lobby_result = str(result)
+            self.last_create_lobby_error = None
+            print('DOTA_CREATE_LOBBY_OK', self.last_create_lobby_result, flush=True)
+        except Exception as exc:
+            self.last_create_lobby_result = None
+            self.last_create_lobby_error = f'{type(exc).__name__}: {exc}'
+            print('DOTA_CREATE_LOBBY_ERROR', self.last_create_lobby_error, flush=True)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail={'error': 'create_lobby_failed', 'message': self.last_create_lobby_error},
+            )
+
+        # GC updates self._dota.lobby asynchronously; give it a moment.
+        for _ in range(10):
+            if getattr(self._dota, 'lobby', None) is not None:
+                break
+            await asyncio.sleep(0.5)
+
+        lobby = getattr(self._dota, 'lobby', None)
+        return {
+            'ok': True,
+            'mode': 'real_pending',
+            'result': self.last_create_lobby_result,
+            'lobby_detected': lobby is not None,
+            'lobby_id': str(getattr(lobby, 'lobby_id', '')) if lobby else None,
+            'leader_id': str(getattr(lobby, 'leader_id', '')) if lobby else None,
+            'message': 'Create practice lobby requested.',
+        }
 
     async def get_lobby(self) -> LobbyState:
         if not self.connected:

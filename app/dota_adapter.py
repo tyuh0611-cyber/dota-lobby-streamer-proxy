@@ -32,6 +32,18 @@ class DotaAdapter:
             },
         )
 
+    async def create_lobby(self) -> dict:
+        if not settings.dota_mock_mode:
+            return await real_dota_adapter.create_lobby()
+
+        return {
+            'ok': True,
+            'mode': 'mock',
+            'lobby_detected': True,
+            'lobby_id': settings.dota_lobby_id or 'mock-lobby-1',
+            'message': 'Mock lobby already exists.',
+        }
+
     async def get_lobby(self) -> LobbyState:
         if not settings.dota_mock_mode:
             return await real_dota_adapter.get_lobby()

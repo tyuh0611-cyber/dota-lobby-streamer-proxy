@@ -58,6 +58,11 @@ async def dota_connect(payload: DotaConnectRequest | None = None) -> dict:
     return await dota_adapter.connect(payload.steam_guard_code if payload else None)
 
 
+@app.post('/dota/create-lobby', dependencies=[Depends(require_proxy_key)])
+async def dota_create_lobby() -> dict:
+    return await dota_adapter.create_lobby()
+
+
 @app.get('/dota/lobby', dependencies=[Depends(require_proxy_key)])
 async def dota_lobby() -> dict:
     lobby = await dota_adapter.get_lobby()
