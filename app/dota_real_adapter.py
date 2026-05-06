@@ -1,4 +1,9 @@
+import asyncio
+import base64
+import hashlib
+import hmac
 import importlib.util
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -29,6 +34,7 @@ class RealDotaAdapter:
     def __init__(self) -> None:
         self.connected = False
         self.last_error: str | None = None
+        self.last_login_result: str | None = None
         self._client: Any | None = None
         self._dota: Any | None = None
 
@@ -62,6 +68,7 @@ class RealDotaAdapter:
         deps = self.dependency_status()
         missing_config = self.missing_config()
         ready_for_login = deps.ready and not missing_config
+
         return {
             'ok': True,
             'mode': 'real_pending',
@@ -73,6 +80,7 @@ class RealDotaAdapter:
             'config': self.config_status(),
             'missing_config': missing_config,
             'last_error': self.last_error,
+            'last_login_result': self.last_login_result,
         }
 
     def _status_message(self, deps: DotaDependencyStatus, missing_config: list[str]) -> str:
@@ -80,33 +88,127 @@ class RealDotaAdapter:
             return 'Real Dota adapter dependencies are not installed yet.'
         if missing_config:
             return 'Real Dota adapter credentials are incomplete.'
-        return 'Real Dota adapter boundary is ready for Steam/Dota GC implementation.'
+        if self.connected:
+            return 'Steam login completed. Dota GC lobby/invite wiring is next.'
+        return 'Ready for Steam login attempt.'
 
-    def _not_implemented(self, operation: str, extra: dict | None = None) -> HTTPException:
-        payload = {
-            'error': 'real_dota_adapter_not_implemented',
-            'operation': operation,
-            'message': 'Real Steam/Dota Game Coordinator implementation is not wired yet. Keep DOTA_MOCK_MODE=true until the GC client is implemented.',
-            'status': {
-                'dependencies': self.dependency_status().model_dump(),
-                'config': self.config_status(),
-                'missing_config': self.missing_config(),
-                'connected': self.connected,
-                'last_error': self.last_error,
-            },
-        }
-        if extra:
-            payload.update(extra)
-        return HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=payload)
+    def _two_factor_code(self) -> str:
+        secret = settings.steam_shared_secret.strip()
+        if not secret:
+            return ''
+
+        shared_secret = base64.b64decode(secret)
+        timestamp = int(time.time()) // 30
+        time_bytes = timestamp.to_bytes(8, byteorder='big')
+        digest = hmac.new(shared_secret, time_bytes, hashlib.sha1).digest()
+        start = digest[19] & 0x0F
+        code_int = int.from_bytes(digest[start:start + 4], byteorder='big') & 0x7FFFFFFF
+        chars = '23456789BCDFGHJKMNPQRTVWXY'
+
+        code = ''
+        for _ in range(5):
+            code += chars[code_int % len(chars)]
+            code_int //= len(chars)
+
+        return code
 
     async def connect(self) -> dict:
-        raise self._not_implemented('connect')
+        deps = self.dependency_status()
+        missing = self.missing_config()
+
+        if not deps.ready:
+            self.connected = False
+            self.last_error = 'missing_python_dependencies'
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    'error': 'missing_python_dependencies',
+                    'dependencies': deps.model_dump(),
+                    'message': 'Install streamer proxy requirements first.',
+                },
+            )
+
+        if missing:
+            self.connected = False
+            self.last_error = 'missing_config:' + ','.join(missing)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    'error': 'missing_config',
+                    'missing_config': missing,
+                    'config': self.config_status(),
+                },
+            )
+
+        try:
+            result = await asyncio.to_thread(self._connect_sync)
+        except Exception as exc:
+            self.connected = False
+            self.last_error = f'{type(exc).__name__}: {exc}'
+            print('DOTA_CONNECT_ERROR', self.last_error, flush=True)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail={
+                    'error': 'steam_login_failed',
+                    'message': self.last_error,
+                    'status': await self.get_status(),
+                },
+            )
+
+        self.connected = True
+        self.last_error = None
+        self.last_login_result = str(result)
+
+        return {
+            'ok': True,
+            'mode': 'real_pending',
+            'connected': True,
+            'login_result': self.last_login_result,
+            'message': 'Steam login completed. Dota GC lobby/invite wiring is next.',
+        }
+
+    def _connect_sync(self) -> Any:
+        from steam.client import SteamClient
+        from dota2.client import Dota2Client
+
+        two_factor_code = self._two_factor_code()
+
+        client = SteamClient()
+        login_result = client.login(
+            username=settings.steam_username,
+            password=settings.steam_password,
+            two_factor_code=two_factor_code,
+        )
+
+        self._client = client
+        self._dota = Dota2Client(client)
+
+        return login_result
 
     async def get_lobby(self) -> LobbyState:
-        raise self._not_implemented('get_lobby')
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail={
+                'error': 'real_dota_lobby_not_implemented',
+                'message': 'Steam login boundary exists. Dota GC lobby reading is next.',
+                'connected': self.connected,
+                'last_login_result': self.last_login_result,
+                'last_error': self.last_error,
+            },
+        )
 
     async def invite_to_lobby(self, steam_id: str) -> InviteResult:
-        raise self._not_implemented('invite_to_lobby', {'steam_id': steam_id})
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail={
+                'error': 'real_dota_invite_not_implemented',
+                'message': 'Steam login boundary exists. Dota GC invite wiring is next.',
+                'steam_id': steam_id,
+                'connected': self.connected,
+                'last_login_result': self.last_login_result,
+                'last_error': self.last_error,
+            },
+        )
 
 
 real_dota_adapter = RealDotaAdapter()
