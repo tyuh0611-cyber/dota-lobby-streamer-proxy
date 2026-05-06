@@ -60,15 +60,12 @@ class RealDotaAdapter:
             missing.append('STEAM_USERNAME')
         if not settings.steam_password:
             missing.append('STEAM_PASSWORD')
-        if not settings.steam_shared_secret:
-            missing.append('STEAM_SHARED_SECRET')
         return missing
 
     async def get_status(self) -> dict:
         deps = self.dependency_status()
         missing_config = self.missing_config()
         ready_for_login = deps.ready and not missing_config
-
         return {
             'ok': True,
             'mode': 'real_pending',
@@ -87,16 +84,17 @@ class RealDotaAdapter:
         if not deps.ready:
             return 'Real Dota adapter dependencies are not installed yet.'
         if missing_config:
-            return 'Real Dota adapter credentials are incomplete.'
+            return 'Steam username/password are incomplete.'
         if self.connected:
             return 'Steam login completed. Dota GC lobby/invite wiring is next.'
-        return 'Ready for Steam login attempt.'
+        return 'Ready for Steam login attempt. Use shared_secret or one-time Steam Guard code.'
 
-    def _two_factor_code(self) -> str:
+    def _two_factor_code(self, steam_guard_code: str | None = None) -> str:
+        if steam_guard_code:
+            return steam_guard_code.strip().replace(' ', '')
         secret = settings.steam_shared_secret.strip()
         if not secret:
             return ''
-
         shared_secret = base64.b64decode(secret)
         timestamp = int(time.time()) // 30
         time_bytes = timestamp.to_bytes(8, byteorder='big')
@@ -104,61 +102,42 @@ class RealDotaAdapter:
         start = digest[19] & 0x0F
         code_int = int.from_bytes(digest[start:start + 4], byteorder='big') & 0x7FFFFFFF
         chars = '23456789BCDFGHJKMNPQRTVWXY'
-
         code = ''
         for _ in range(5):
             code += chars[code_int % len(chars)]
             code_int //= len(chars)
-
         return code
 
-    async def connect(self) -> dict:
+    async def connect(self, steam_guard_code: str | None = None) -> dict:
         deps = self.dependency_status()
         missing = self.missing_config()
-
         if not deps.ready:
             self.connected = False
             self.last_error = 'missing_python_dependencies'
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail={
-                    'error': 'missing_python_dependencies',
-                    'dependencies': deps.model_dump(),
-                    'message': 'Install streamer proxy requirements first.',
-                },
+                detail={'error': 'missing_python_dependencies', 'dependencies': deps.model_dump()},
             )
-
         if missing:
             self.connected = False
             self.last_error = 'missing_config:' + ','.join(missing)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    'error': 'missing_config',
-                    'missing_config': missing,
-                    'config': self.config_status(),
-                },
+                detail={'error': 'missing_config', 'missing_config': missing, 'config': self.config_status()},
             )
-
         try:
-            result = await asyncio.to_thread(self._connect_sync)
+            result = await asyncio.to_thread(self._connect_sync, steam_guard_code)
         except Exception as exc:
             self.connected = False
             self.last_error = f'{type(exc).__name__}: {exc}'
             print('DOTA_CONNECT_ERROR', self.last_error, flush=True)
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail={
-                    'error': 'steam_login_failed',
-                    'message': self.last_error,
-                    'status': await self.get_status(),
-                },
+                detail={'error': 'steam_login_failed', 'message': self.last_error, 'status': await self.get_status()},
             )
-
         self.connected = True
         self.last_error = None
         self.last_login_result = str(result)
-
         return {
             'ok': True,
             'mode': 'real_pending',
@@ -167,22 +146,18 @@ class RealDotaAdapter:
             'message': 'Steam login completed. Dota GC lobby/invite wiring is next.',
         }
 
-    def _connect_sync(self) -> Any:
+    def _connect_sync(self, steam_guard_code: str | None = None) -> Any:
         from steam.client import SteamClient
         from dota2.client import Dota2Client
-
-        two_factor_code = self._two_factor_code()
-
+        two_factor_code = self._two_factor_code(steam_guard_code)
         client = SteamClient()
         login_result = client.login(
             username=settings.steam_username,
             password=settings.steam_password,
             two_factor_code=two_factor_code,
         )
-
         self._client = client
         self._dota = Dota2Client(client)
-
         return login_result
 
     async def get_lobby(self) -> LobbyState:
