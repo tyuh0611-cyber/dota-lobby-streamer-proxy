@@ -212,9 +212,20 @@ class RealDotaAdapter:
 
             try:
                 result = method()
-                self.gc_started = True
-                self.last_gc_result = f'{method_name}: {result}'
-                print('DOTA_GC_LAUNCH_OK', self.last_gc_result, flush=True)
+                ready_result = None
+                ready_error = None
+                try:
+                    ready_result = self._dota.wait_event('ready', timeout=20)
+                except Exception as exc:
+                    ready_error = f'{type(exc).__name__}: {exc}'
+
+                self.gc_started = ready_error is None
+                self.last_gc_result = f'{method_name}: {result}; ready: {ready_result}'
+                self.last_gc_error = ready_error
+                if ready_error:
+                    print('DOTA_GC_READY_ERROR', ready_error, flush=True)
+                else:
+                    print('DOTA_GC_LAUNCH_OK', self.last_gc_result, flush=True)
                 return
             except TypeError:
                 continue
@@ -275,15 +286,9 @@ class RealDotaAdapter:
         result = self._dota.create_practice_lobby(password, options)
 
         events = []
-        for event_name in (
-            'practice_lobby_update',
-            'lobby_updated',
-            'lobby_new',
-            'lobby_changed',
-            'lobby',
-        ):
+        for event_name in ('lobby_new', 'lobby_changed'):
             try:
-                event_result = self._dota.wait_event(event_name, timeout=5)
+                event_result = self._dota.wait_event(event_name, timeout=20)
                 events.append({event_name: str(event_result)})
             except Exception as exc:
                 events.append({event_name: f'{type(exc).__name__}: {exc}'})
