@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI, Query
 from fastapi.responses import RedirectResponse
 from .config import settings
 from .dota_adapter import dota_adapter
-from .schemas import InviteRequest
+from .schemas import DotaConnectRequest, InviteRequest
 from .security import require_proxy_key
 from .twitch_client import TwitchClient
 
@@ -54,8 +54,8 @@ async def dota_status() -> dict:
 
 
 @app.post('/dota/connect', dependencies=[Depends(require_proxy_key)])
-async def dota_connect() -> dict:
-    return await dota_adapter.connect()
+async def dota_connect(payload: DotaConnectRequest | None = None) -> dict:
+    return await dota_adapter.connect(payload.steam_guard_code if payload else None)
 
 
 @app.get('/dota/lobby', dependencies=[Depends(require_proxy_key)])
