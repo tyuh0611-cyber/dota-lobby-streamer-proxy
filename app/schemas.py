@@ -16,6 +16,9 @@ class LobbyMember(BaseModel):
 class LobbyState(BaseModel):
     lobby_exists: bool
     lobby_id: str | None = None
+    lobby_name: str | None = None
+    mode: str = 'mock'
+    connected: bool = False
     members: list[LobbyMember] = []
 
 
@@ -26,3 +29,5 @@ class InviteRequest(BaseModel):
 class InviteResult(BaseModel):
     ok: bool
     message: str
+    mode: str = 'mock'
+    steam_id: str | None = None
