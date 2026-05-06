@@ -58,7 +58,7 @@ Notes:
 
 ## Dota status
 
-Real Steam login and Dota GC launch are implemented and verified.
+Real Steam login, Dota GC launch, and real invite are implemented and verified.
 
 Verified current state:
 
@@ -68,6 +68,8 @@ POST /dota/connect -> 200 OK
 last_login_result="1"
 last_gc_result="launch: None"
 last_gc_error=null
+POST /dota/invite -> 200 OK
+invite result -> {"ok":true,"message":"invite_to_lobby:None","mode":"real_pending"}
 ```
 
 This means:
@@ -78,6 +80,7 @@ This means:
 - `STEAM_SHARED_SECRET` is optional.
 - One-time Steam Guard code from the official Steam app can be passed in the `/dota/connect` request.
 - `Dota2Client.launch()` succeeds.
+- `Dota2Client.invite_to_lobby()` succeeds for a real Steam ID.
 
 Implemented streamer endpoints:
 
@@ -100,7 +103,7 @@ Current behavior in `DOTA_MOCK_MODE=false`:
 - `/dota/status` returns `mode=real_pending` with `connected`, `gc_started`, `dota_methods`, and `steam_methods` diagnostics.
 - `/dota/connect` performs Steam login and attempts Dota GC launch.
 - `/dota/lobby` returns current detected lobby state or an empty real-pending lobby state when no lobby is detected yet.
-- `/dota/invite` attempts available Dota invite methods and returns diagnostics if the method fails.
+- `/dota/invite` sends invite through `invite_to_lobby`.
 
 ## Dota env shape
 
@@ -146,8 +149,8 @@ curl -i -X POST -H "X-Api-Key: $KEY" -H "Content-Type: application/json" -d '{"s
 Next Dota phase:
 
 1. Inspect `/dota/lobby` body while the account is actually inside a Dota lobby/party.
-2. Test `/dota/invite` with a real target Steam ID.
-3. Based on returned method diagnostics, finalize the exact invite method and response handling.
+2. Make backend Quick Invite use the verified real `/dota/invite` path in production mode.
+3. Improve Control Center Dota status UX for `connected`, `gc_started`, and `lobby_exists`.
 4. Keep the session alive across API calls while `streamer-proxy` process is running.
 
 ## AI workflow rule
