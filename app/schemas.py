@@ -22,6 +22,10 @@ class LobbyState(BaseModel):
     members: list[LobbyMember] = []
 
 
+class DotaConnectRequest(BaseModel):
+    steam_guard_code: str | None = None
+
+
 class InviteRequest(BaseModel):
     steam_id: str
 
