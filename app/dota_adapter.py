@@ -1,41 +1,26 @@
-from fastapi import HTTPException, status
-
 from .config import settings
+from .dota_real_adapter import real_dota_adapter
 from .schemas import InviteResult, LobbyMember, LobbyState
 
 
 class DotaAdapter:
-    def _steam_config_status(self) -> dict:
-        return {
-            'steam_username_set': bool(settings.steam_username),
-            'steam_password_set': bool(settings.steam_password),
-            'steam_shared_secret_set': bool(settings.steam_shared_secret),
-            'dota_account_id_set': bool(settings.dota_account_id),
-            'dota_lobby_id_set': bool(settings.dota_lobby_id),
-            'dota_lobby_name_set': bool(settings.dota_lobby_name),
-        }
-
     async def get_status(self) -> dict:
+        if not settings.dota_mock_mode:
+            return await real_dota_adapter.get_status()
+
         return {
             'ok': True,
-            'mode': 'mock' if settings.dota_mock_mode else 'real_pending',
+            'mode': 'mock',
             'connected': False,
-            'mock_mode': settings.dota_mock_mode,
+            'mock_mode': True,
             'real_adapter_ready': False,
-            'message': 'Dota adapter is in mock mode.' if settings.dota_mock_mode else 'Real Steam/Dota GC adapter is not implemented yet.',
-            'config': self._steam_config_status(),
+            'message': 'Dota adapter is in mock mode.',
+            'config': real_dota_adapter.config_status(),
         }
 
     async def get_lobby(self) -> LobbyState:
         if not settings.dota_mock_mode:
-            raise HTTPException(
-                status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                detail={
-                    'error': 'real_dota_adapter_not_implemented',
-                    'message': 'Real Steam/Dota GC lobby reading is not implemented yet. Enable DOTA_MOCK_MODE=true until real adapter is added.',
-                    'config': self._steam_config_status(),
-                },
-            )
+            return await real_dota_adapter.get_lobby()
 
         lobby_id = settings.dota_lobby_id or 'mock-lobby-1'
         lobby_name = settings.dota_lobby_name or 'Mock Lobby'
@@ -54,15 +39,7 @@ class DotaAdapter:
 
     async def invite_to_lobby(self, steam_id: str) -> InviteResult:
         if not settings.dota_mock_mode:
-            raise HTTPException(
-                status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                detail={
-                    'error': 'real_dota_adapter_not_implemented',
-                    'message': 'Real Steam/Dota GC invite is not implemented yet. Enable DOTA_MOCK_MODE=true until real adapter is added.',
-                    'steam_id': steam_id,
-                    'config': self._steam_config_status(),
-                },
-            )
+            return await real_dota_adapter.invite_to_lobby(steam_id)
 
         return InviteResult(
             ok=True,
