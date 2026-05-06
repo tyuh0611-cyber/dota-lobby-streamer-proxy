@@ -1,6 +1,6 @@
 # Current status — streamer proxy
 
-Last updated: 2026-05-05
+Last updated: 2026-05-06
 
 ## Repository
 
@@ -8,140 +8,135 @@ Repo:
 
 ```text
 tyuh0611-cyber/dota-lobby-streamer-proxy
+```
 
 This repository owns streamer-side logic:
 
-Twitch OAuth
-Twitch access/refresh tokens
-Twitch chatters endpoint
-Dota lobby endpoint
-Dota invite endpoint
-future Steam/Dota Game Coordinator integration
+- Twitch OAuth
+- Twitch access/refresh tokens
+- Twitch chatters endpoint
+- Dota lobby endpoint
+- Dota invite endpoint
+- future Steam/Dota Game Coordinator integration
 
 Backend UI, database, queue ranking, and Control Center belong in:
 
+```text
 tyuh0611-cyber/dota-lobby-backend
-Current service path
+```
+
+## Current service path
 
 Systemd should run from:
 
+```ini
 WorkingDirectory=/opt/dota-lobby-streamer-proxy
 EnvironmentFile=/opt/dota-lobby-streamer-proxy/.env
 ExecStart=/opt/dota-lobby-streamer-proxy/.venv/bin/uvicorn app.main:app --host ${APP_HOST} --port ${APP_PORT}
+```
 
-Confirmed current systemctl cat streamer-proxy already points to the new path.
+## Twitch status
 
-Current active problem
+Twitch MVP is complete.
 
-Twitch OAuth callback reaches FastAPI successfully.
+Implemented and verified:
 
-Confirmed by logs:
+- `/twitch/auth-url`
+- HTTPS `/twitch/callback`
+- post-auth redirect back to backend Control Center
+- access/refresh token persistence
+- `/twitch/me`
+- `/twitch/setup`
+- `/chatters`
+- backend Control Center `Status JSON`
+- backend login cookie works after OAuth redirect
 
-/opt/dota-lobby-streamer-proxy/app/main.py
-twitch_callback -> twitch_client.exchange_code(code)
+Notes:
 
-Current failure is inside Twitch token exchange:
+- Twitch `/chat/chatters` is not realtime. Twitch can keep users in chatters for several minutes after they stop watching.
+- If `/chatters` returns `503 twitch_token_refreshed_restart_streamer_proxy`, restart `streamer-proxy` so settings reload from `.env`.
 
-https://id.twitch.tv/oauth2/token
-HTTP 400 Bad Request
+## Dota status
 
-This means nginx and callback routing are no longer the primary problem.
+Current Dota adapter is still mock, but diagnostics are now explicit.
 
-Most likely causes:
+Implemented streamer endpoints:
 
-Wrong or empty TWITCH_CLIENT_SECRET.
-PUBLIC_BASE_URL / TWITCH_REDIRECT_URI mismatch.
-Twitch Developer Console redirect URL mismatch.
-Reused or expired Twitch code.
-Auth URL was generated with a different redirect URI than token exchange uses.
-Current fix added
+```text
+/dota/status
+/dota/lobby
+/dota/invite
+```
 
-app/twitch_client.py now logs Twitch token exchange errors as:
+Current behavior in `DOTA_MOCK_MODE=true`:
 
-TWITCH_TOKEN_ERROR <status> <twitch_response> redirect_uri= <redirect_uri>
+- `/dota/status` returns `mode=mock`, `connected=false`, `real_adapter_ready=false`.
+- `/dota/lobby` returns a mock lobby with mock members.
+- `/dota/invite` returns a mock successful invite response.
 
-The callback now returns HTTP 502 with structured details instead of hiding the Twitch response behind an internal traceback.
+Current behavior in `DOTA_MOCK_MODE=false`:
 
-Next test
+- `/dota/status` returns `mode=real_pending`, `connected=false`, `real_adapter_ready=false`.
+- `/dota/lobby` returns HTTP 501 with `real_dota_adapter_not_implemented`.
+- `/dota/invite` returns HTTP 501 with `real_dota_adapter_not_implemented`.
 
-Restart service:
+This is intentional until real Steam/Dota Game Coordinator integration is implemented.
 
+## Dota env shape
+
+```env
+DOTA_MOCK_MODE=true
+DOTA_LOBBY_ID=
+DOTA_LOBBY_NAME=
+DOTA_ACCOUNT_ID=
+STEAM_USERNAME=
+STEAM_PASSWORD=
+STEAM_SHARED_SECRET=
+```
+
+Real Steam/Dota credentials stay in local `.env` only and must not be committed.
+
+## First checks after deploy
+
+```bash
+cd /opt/dota-lobby-streamer-proxy
+python3 -m py_compile app/*.py
 systemctl restart streamer-proxy
 sleep 2
 systemctl status streamer-proxy --no-pager
+journalctl -u streamer-proxy -n 80 --no-pager
+```
 
-Generate a new auth URL:
+Direct API checks:
 
-KEY=$(grep '^PROXY_API_KEY=' /opt/dota-lobby-streamer-proxy/.env | cut -d= -f2-)
-curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:8081/twitch/auth-url
+```bash
+KEY=$(grep '^PROXY_API_KEY=' .env | cut -d= -f2-)
+curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/twitch/me
+curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/chatters
+curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/status
+curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/lobby
+curl -i -X POST -H "X-Api-Key: $KEY" -H "Content-Type: application/json" -d '{"steam_id":"76561198000000001"}' http://127.0.0.1:8081/dota/invite
+```
 
-Open the new URL in browser and authorize Twitch.
+## Next project step
 
-Then inspect logs:
+Next Dota phase:
 
-journalctl -u streamer-proxy -n 120 --no-pager
+1. Verify backend Lobby panel and Quick Invite against mock Dota endpoints.
+2. Add a safer Dota setup/status panel in backend if needed.
+3. Design and implement real Steam/Dota Game Coordinator adapter.
 
-Look for:
-
-TWITCH_TOKEN_ERROR
-
-The body will show the real Twitch reason.
-
-Required env shape
-PUBLIC_BASE_URL=https://test.raze1x6.mom
-TWITCH_REDIRECT_URI=
-TWITCH_CLIENT_ID=<from Twitch Developer Console>
-TWITCH_CLIENT_SECRET=<from Twitch Developer Console>
-TWITCH_ACCESS_TOKEN=
-TWITCH_REFRESH_TOKEN=
-TWITCH_BROADCASTER_ID=
-TWITCH_MODERATOR_ID=
-
-Twitch Developer Console must contain exactly:
-
-https://test.raze1x6.mom/twitch/callback
-AI workflow rule
+## AI workflow rule
 
 Do not rely only on chat history.
 
-Before work, read from GitHub main:
+Before work, read from GitHub `main`:
 
+```text
 docs/CURRENT_STATUS.md
 docs/AI_NOTES.md
 docs/project_context.md
 PROJECT_FILES.txt
+```
 
-After code changes, update docs and push to main.
-
-## Twitch token exchange diagnostics added
-
-A local diagnostic patch was added to `app/twitch_client.py`.
-
-When Twitch token exchange fails, the service now logs:
-
-```text
-TWITCH_TOKEN_ERROR <status_code> <twitch_response> redirect_uri= <redirect_uri>
-
-This is needed because Twitch currently returns:
-
-HTTP 400 Bad Request
-https://id.twitch.tv/oauth2/token
-
-Callback routing is confirmed working because /twitch/callback reaches FastAPI and calls twitch_client.exchange_code(code).
-
-The next step is to restart streamer-proxy, generate a new Twitch auth URL, authorize again, and read the exact TWITCH_TOKEN_ERROR line from journald.
-
-Important: Twitch OAuth code is one-time use. Do not retry an old callback URL.
-
-## Twitch setup automation
-
-Twitch OAuth now aims to be fully automatic for streamer setup:
-
-- `/twitch/callback` saves access/refresh tokens.
-- `/twitch/callback` also tries to read `/helix/users` and save streamer numeric user id.
-- `/twitch/me` returns the current authorized Twitch user.
-- `/twitch/setup` saves `TWITCH_BROADCASTER_ID` and `TWITCH_MODERATOR_ID` from the authorized Twitch user.
-- `/chatters` reports Twitch API errors with explicit diagnostics.
-- If access token is expired, streamer proxy attempts refresh through `TWITCH_REFRESH_TOKEN`.
-
-If `/chatters` returns `503 twitch_token_refreshed_restart_streamer_proxy`, restart `streamer-proxy` so settings are reloaded from `.env`.
+After code changes, update docs and push to `main`.
