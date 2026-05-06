@@ -1,4 +1,6 @@
 from fastapi import Depends, FastAPI, Query
+from fastapi.responses import RedirectResponse
+from .config import settings
 from .dota_adapter import dota_adapter
 from .schemas import InviteRequest
 from .security import require_proxy_key
@@ -19,8 +21,10 @@ async def twitch_auth_url() -> dict:
 
 
 @app.get('/twitch/callback')
-async def twitch_callback(code: str = Query(...)) -> dict:
+async def twitch_callback(code: str = Query(...)):
     result = await twitch_client.exchange_code(code)
+    if settings.post_twitch_auth_redirect_url:
+        return RedirectResponse(settings.post_twitch_auth_redirect_url, status_code=303)
     return {
         'ok': True,
         'message': 'Twitch tokens and user ids saved to .env. Restart streamer-proxy now.',
