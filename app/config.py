@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     twitch_scopes: str = 'moderator:read:chatters'
 
     dota_mock_mode: bool = True
+    dota_lobby_id: str = ''
+    dota_lobby_name: str = ''
+    dota_account_id: str = ''
     steam_username: str = ''
     steam_password: str = ''
     steam_shared_secret: str = ''
