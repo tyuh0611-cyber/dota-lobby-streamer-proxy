@@ -247,7 +247,7 @@ class RealDotaAdapter:
         }
 
         try:
-            result = await asyncio.to_thread(self._dota.create_practice_lobby, password or '', options)
+            result = await asyncio.to_thread(self._create_lobby_sync, password or '', options)
             self.last_create_lobby_result = str(result)
             self.last_create_lobby_error = None
             print('DOTA_CREATE_LOBBY_OK', self.last_create_lobby_result, flush=True)
@@ -260,12 +260,6 @@ class RealDotaAdapter:
                 detail={'error': 'create_lobby_failed', 'message': self.last_create_lobby_error},
             )
 
-        # GC updates self._dota.lobby asynchronously; give it a moment.
-        for _ in range(10):
-            if getattr(self._dota, 'lobby', None) is not None:
-                break
-            await asyncio.sleep(0.5)
-
         lobby = getattr(self._dota, 'lobby', None)
         return {
             'ok': True,
@@ -275,6 +269,36 @@ class RealDotaAdapter:
             'lobby_id': str(getattr(lobby, 'lobby_id', '')) if lobby else None,
             'leader_id': str(getattr(lobby, 'leader_id', '')) if lobby else None,
             'message': 'Create practice lobby requested.',
+        }
+
+    def _create_lobby_sync(self, password: str, options: dict) -> dict:
+        result = self._dota.create_practice_lobby(password, options)
+
+        events = []
+        for event_name in (
+            'practice_lobby_update',
+            'lobby_updated',
+            'lobby_new',
+            'lobby_changed',
+            'lobby',
+        ):
+            try:
+                event_result = self._dota.wait_event(event_name, timeout=5)
+                events.append({event_name: str(event_result)})
+            except Exception as exc:
+                events.append({event_name: f'{type(exc).__name__}: {exc}'})
+
+            if getattr(self._dota, 'lobby', None) is not None:
+                break
+
+        lobby = getattr(self._dota, 'lobby', None)
+
+        return {
+            'create_result': str(result),
+            'events': events,
+            'lobby_detected': lobby is not None,
+            'lobby_id': str(getattr(lobby, 'lobby_id', '')) if lobby else None,
+            'leader_id': str(getattr(lobby, 'leader_id', '')) if lobby else None,
         }
 
     async def get_lobby(self) -> LobbyState:
