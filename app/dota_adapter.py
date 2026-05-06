@@ -1,3 +1,5 @@
+from fastapi import HTTPException, status
+
 from .config import settings
 from .dota_real_adapter import real_dota_adapter
 from .schemas import InviteResult, LobbyMember, LobbyState
@@ -17,6 +19,18 @@ class DotaAdapter:
             'message': 'Dota adapter is in mock mode.',
             'config': real_dota_adapter.config_status(),
         }
+
+    async def connect(self) -> dict:
+        if not settings.dota_mock_mode:
+            return await real_dota_adapter.connect()
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                'error': 'dota_mock_mode_enabled',
+                'message': 'Dota connect is only available when DOTA_MOCK_MODE=false.',
+            },
+        )
 
     async def get_lobby(self) -> LobbyState:
         if not settings.dota_mock_mode:
