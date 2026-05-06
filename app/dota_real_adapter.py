@@ -191,6 +191,12 @@ class RealDotaAdapter:
         )
 
         self._client = client
+        try:
+            client.games_played([570])
+            print('STEAM_GAMES_PLAYED_OK 570', flush=True)
+        except Exception as exc:
+            print('STEAM_GAMES_PLAYED_ERROR', type(exc).__name__, exc, flush=True)
+
         self._dota = Dota2Client(client)
         self._launch_gc_sync()
 
