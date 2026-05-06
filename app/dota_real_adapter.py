@@ -12,6 +12,8 @@ from fastapi import HTTPException, status
 from .config import settings
 from .schemas import InviteResult, LobbyMember, LobbyState
 
+STEAM_ID64_BASE = 76561197960265728
+
 
 @dataclass
 class DotaDependencyStatus:
@@ -38,6 +40,7 @@ class RealDotaAdapter:
         self.last_login_result: str | None = None
         self.last_gc_result: str | None = None
         self.last_gc_error: str | None = None
+        self.last_invite_attempts: list[dict] = []
         self._client: Any | None = None
         self._dota: Any | None = None
 
@@ -83,6 +86,7 @@ class RealDotaAdapter:
             'last_login_result': self.last_login_result,
             'last_gc_result': self.last_gc_result,
             'last_gc_error': self.last_gc_error,
+            'last_invite_attempts': self.last_invite_attempts,
             'dota_methods': self._public_methods(self._dota),
             'steam_methods': self._public_methods(self._client),
         }
@@ -257,39 +261,57 @@ class RealDotaAdapter:
         if not self._dota:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={'error': 'dota_client_not_initialized'})
 
-        candidate_methods = (
-            'invite_to_lobby',
-            'invite_to_party',
-            'invite_to_game',
-            'invite_to_practice_lobby',
-            'send_lobby_invite',
-        )
-
-        errors = []
+        variants = self._steam_id_variants(steam_id)
+        candidate_methods = ('invite_to_lobby', 'invite_to_party')
+        attempts: list[dict] = []
 
         for method_name in candidate_methods:
             method = getattr(self._dota, method_name, None)
             if not callable(method):
+                attempts.append({'method': method_name, 'error': 'method_not_available'})
                 continue
 
-            try:
-                result = await asyncio.to_thread(method, int(steam_id))
-                return InviteResult(
-                    ok=True,
-                    message=f'{method_name}:{result}',
-                    mode='real_pending',
-                    steam_id=steam_id,
-                )
-            except Exception as exc:
-                errors.append(f'{method_name}: {type(exc).__name__}: {exc}')
+            for id_kind, id_value in variants:
+                try:
+                    result = await asyncio.to_thread(method, id_value)
+                    attempts.append({
+                        'method': method_name,
+                        'id_kind': id_kind,
+                        'id_value': str(id_value),
+                        'ok': True,
+                        'result': str(result),
+                    })
+                    print('DOTA_INVITE_ATTEMPT_OK', method_name, id_kind, id_value, result, flush=True)
+                except Exception as exc:
+                    attempts.append({
+                        'method': method_name,
+                        'id_kind': id_kind,
+                        'id_value': str(id_value),
+                        'ok': False,
+                        'error': f'{type(exc).__name__}: {exc}',
+                    })
+                    print('DOTA_INVITE_ATTEMPT_ERROR', method_name, id_kind, id_value, type(exc).__name__, exc, flush=True)
+
+        self.last_invite_attempts = attempts
+        ok_attempts = [a for a in attempts if a.get('ok')]
+
+        if ok_attempts:
+            return InviteResult(
+                ok=True,
+                message='invite_attempts:' + ';'.join(
+                    f"{a['method']}:{a['id_kind']}:{a['result']}" for a in ok_attempts
+                ),
+                mode='real_pending',
+                steam_id=steam_id,
+            )
 
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
             detail={
-                'error': 'real_dota_invite_method_not_found_or_failed',
+                'error': 'real_dota_invite_all_attempts_failed',
                 'steam_id': steam_id,
-                'attempted_methods': list(candidate_methods),
-                'method_errors': errors,
+                'id_variants': [{'kind': kind, 'value': str(value)} for kind, value in variants],
+                'attempts': attempts,
                 'available_dota_methods': self._public_methods(self._dota),
                 'connected': self.connected,
                 'gc_started': self.gc_started,
@@ -297,6 +319,13 @@ class RealDotaAdapter:
                 'last_gc_error': self.last_gc_error,
             },
         )
+
+    def _steam_id_variants(self, steam_id: str) -> list[tuple[str, int]]:
+        raw = int(str(steam_id).strip())
+        variants: list[tuple[str, int]] = [('steam_id64', raw)]
+        if raw > STEAM_ID64_BASE:
+            variants.append(('account_id32', raw - STEAM_ID64_BASE))
+        return variants
 
     def _read_lobby_payload(self) -> Any | None:
         if not self._dota:
