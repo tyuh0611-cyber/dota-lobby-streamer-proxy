@@ -58,12 +58,27 @@ Notes:
 
 ## Dota status
 
-Current Dota adapter is still mock, but diagnostics are now explicit.
+Real Steam login boundary is implemented and verified.
+
+Verified current state:
+
+```text
+POST /dota/connect -> 200 OK
+```
+
+This means:
+
+- Steam/Dota Python dependencies are installed.
+- `DOTA_MOCK_MODE=false` works for the connect path.
+- `STEAM_USERNAME` and `STEAM_PASSWORD` are accepted from local `.env`.
+- `STEAM_SHARED_SECRET` is optional.
+- One-time Steam Guard code from the official Steam app can be passed in the `/dota/connect` request.
 
 Implemented streamer endpoints:
 
 ```text
 /dota/status
+/dota/connect
 /dota/lobby
 /dota/invite
 ```
@@ -73,19 +88,19 @@ Current behavior in `DOTA_MOCK_MODE=true`:
 - `/dota/status` returns `mode=mock`, `connected=false`, `real_adapter_ready=false`.
 - `/dota/lobby` returns a mock lobby with mock members.
 - `/dota/invite` returns a mock successful invite response.
+- `/dota/connect` returns HTTP 409 because connect is only for real mode.
 
 Current behavior in `DOTA_MOCK_MODE=false`:
 
-- `/dota/status` returns `mode=real_pending`, `connected=false`, `real_adapter_ready=false`.
-- `/dota/lobby` returns HTTP 501 with `real_dota_adapter_not_implemented`.
-- `/dota/invite` returns HTTP 501 with `real_dota_adapter_not_implemented`.
-
-This is intentional until real Steam/Dota Game Coordinator integration is implemented.
+- `/dota/status` returns `mode=real_pending`.
+- `/dota/connect` performs Steam login attempt.
+- `/dota/lobby` returns HTTP 501 because Dota GC lobby reading is not wired yet.
+- `/dota/invite` returns HTTP 501 because Dota GC invite wiring is not complete yet.
 
 ## Dota env shape
 
 ```env
-DOTA_MOCK_MODE=true
+DOTA_MOCK_MODE=false
 DOTA_LOBBY_ID=
 DOTA_LOBBY_NAME=
 DOTA_ACCOUNT_ID=
@@ -95,6 +110,8 @@ STEAM_SHARED_SECRET=
 ```
 
 Real Steam/Dota credentials stay in local `.env` only and must not be committed.
+
+`STEAM_SHARED_SECRET` is optional. For normal streamer onboarding, use an one-time Steam Guard code from the official Steam mobile app when calling `/dota/connect`.
 
 ## First checks after deploy
 
@@ -114,6 +131,7 @@ KEY=$(grep '^PROXY_API_KEY=' .env | cut -d= -f2-)
 curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/twitch/me
 curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/chatters
 curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/status
+curl -i -X POST -H "X-Api-Key: $KEY" -H "Content-Type: application/json" -d '{"steam_guard_code":"12345"}' http://127.0.0.1:8081/dota/connect
 curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/lobby
 curl -i -X POST -H "X-Api-Key: $KEY" -H "Content-Type: application/json" -d '{"steam_id":"76561198000000001"}' http://127.0.0.1:8081/dota/invite
 ```
@@ -122,9 +140,11 @@ curl -i -X POST -H "X-Api-Key: $KEY" -H "Content-Type: application/json" -d '{"s
 
 Next Dota phase:
 
-1. Verify backend Lobby panel and Quick Invite against mock Dota endpoints.
-2. Add a safer Dota setup/status panel in backend if needed.
-3. Design and implement real Steam/Dota Game Coordinator adapter.
+1. Wire Dota2Client into Steam client session after successful Steam login.
+2. Launch/start Dota GC session.
+3. Read current party/lobby state from GC.
+4. Implement invite by `steam_id`.
+5. Keep the session alive across API calls while `streamer-proxy` process is running.
 
 ## AI workflow rule
 
