@@ -20,9 +20,9 @@ class DotaAdapter:
             'config': real_dota_adapter.config_status(),
         }
 
-    async def connect(self) -> dict:
+    async def connect(self, steam_guard_code: str | None = None) -> dict:
         if not settings.dota_mock_mode:
-            return await real_dota_adapter.connect()
+            return await real_dota_adapter.connect(steam_guard_code)
 
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
