@@ -17,7 +17,7 @@ This repository owns streamer-side logic:
 - Twitch chatters endpoint
 - Dota lobby endpoint
 - Dota invite endpoint
-- future Steam/Dota Game Coordinator integration
+- Steam/Dota Game Coordinator integration
 
 Backend UI, database, queue ranking, and Control Center belong in:
 
@@ -58,12 +58,16 @@ Notes:
 
 ## Dota status
 
-Real Steam login boundary is implemented and verified.
+Real Steam login and Dota GC launch are implemented and verified.
 
 Verified current state:
 
 ```text
 POST /dota/connect -> 200 OK
+/dota/status -> connected=true, gc_started=true, real_adapter_ready=true
+last_login_result="1"
+last_gc_result="launch: None"
+last_gc_error=null
 ```
 
 This means:
@@ -73,6 +77,7 @@ This means:
 - `STEAM_USERNAME` and `STEAM_PASSWORD` are accepted from local `.env`.
 - `STEAM_SHARED_SECRET` is optional.
 - One-time Steam Guard code from the official Steam app can be passed in the `/dota/connect` request.
+- `Dota2Client.launch()` succeeds.
 
 Implemented streamer endpoints:
 
@@ -92,10 +97,10 @@ Current behavior in `DOTA_MOCK_MODE=true`:
 
 Current behavior in `DOTA_MOCK_MODE=false`:
 
-- `/dota/status` returns `mode=real_pending`.
-- `/dota/connect` performs Steam login attempt.
-- `/dota/lobby` returns HTTP 501 because Dota GC lobby reading is not wired yet.
-- `/dota/invite` returns HTTP 501 because Dota GC invite wiring is not complete yet.
+- `/dota/status` returns `mode=real_pending` with `connected`, `gc_started`, `dota_methods`, and `steam_methods` diagnostics.
+- `/dota/connect` performs Steam login and attempts Dota GC launch.
+- `/dota/lobby` returns current detected lobby state or an empty real-pending lobby state when no lobby is detected yet.
+- `/dota/invite` attempts available Dota invite methods and returns diagnostics if the method fails.
 
 ## Dota env shape
 
@@ -111,7 +116,7 @@ STEAM_SHARED_SECRET=
 
 Real Steam/Dota credentials stay in local `.env` only and must not be committed.
 
-`STEAM_SHARED_SECRET` is optional. For normal streamer onboarding, use an one-time Steam Guard code from the official Steam mobile app when calling `/dota/connect`.
+`STEAM_SHARED_SECRET` is optional. For normal streamer onboarding, use a one-time Steam Guard code from the official Steam mobile app when calling `/dota/connect`.
 
 ## First checks after deploy
 
@@ -140,11 +145,10 @@ curl -i -X POST -H "X-Api-Key: $KEY" -H "Content-Type: application/json" -d '{"s
 
 Next Dota phase:
 
-1. Wire Dota2Client into Steam client session after successful Steam login.
-2. Launch/start Dota GC session.
-3. Read current party/lobby state from GC.
-4. Implement invite by `steam_id`.
-5. Keep the session alive across API calls while `streamer-proxy` process is running.
+1. Inspect `/dota/lobby` body while the account is actually inside a Dota lobby/party.
+2. Test `/dota/invite` with a real target Steam ID.
+3. Based on returned method diagnostics, finalize the exact invite method and response handling.
+4. Keep the session alive across API calls while `streamer-proxy` process is running.
 
 ## AI workflow rule
 
