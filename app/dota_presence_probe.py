@@ -1,3 +1,4 @@
+import os
 import time
 from typing import Any
 
@@ -16,9 +17,12 @@ def _wait_tick(client: Any, seconds: float = 2.0) -> None:
 
 
 def run_presence_probe(real_adapter: Any, selected_variant: str | None = None) -> dict:
+    if not selected_variant:
+        selected_variant = os.getenv('DOTA_PRESENCE_VARIANT') or None
+
     client = getattr(real_adapter, '_client', None)
     if client is None:
-        return {'ok': False, 'error': 'steam_client_not_initialized'}
+        return {'ok': False, 'error': 'steam_client_not_initialized', 'selected_variant': selected_variant}
 
     before = {
         'logged_on': str(getattr(client, 'logged_on', None)),
