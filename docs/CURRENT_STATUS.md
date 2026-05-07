@@ -1,6 +1,6 @@
 # Current status — streamer proxy
 
-Last updated: 2026-05-06
+Last updated: 2026-05-07
 
 ## Repository
 
@@ -35,7 +35,7 @@ EnvironmentFile=/opt/dota-lobby-streamer-proxy/.env
 ExecStart=/opt/dota-lobby-streamer-proxy/.venv/bin/uvicorn app.main:app --host ${APP_HOST} --port ${APP_PORT}
 ```
 
-Important nuance found during debugging:
+Important server nuance found during debugging:
 
 ```text
 /opt/dota-lobby-streamer-proxy/.venv/bin/uvicorn
@@ -82,9 +82,9 @@ Notes:
 
 ## Dota status
 
-Real Steam login and Dota GC launch are implemented and verified.
+Real Steam login and Dota GC launch are implemented and previously verified.
 
-Verified:
+Verified before the current patch:
 
 ```text
 POST /dota/connect -> 200 OK
@@ -116,16 +116,7 @@ Implemented streamer endpoints:
 
 ## Current Dota blocker
 
-Real invite API calls return success at the library-call level, but the target player does not receive an invite.
-
-Observed invite attempts:
-
-```text
-DOTA_INVITE_ATTEMPT_OK invite_to_lobby steam_id64 76561198807245109 None
-DOTA_INVITE_ATTEMPT_OK invite_to_lobby account_id32 846979381 None
-DOTA_INVITE_ATTEMPT_OK invite_to_party steam_id64 76561198807245109 job_1
-DOTA_INVITE_ATTEMPT_OK invite_to_party account_id32 846979381 job_2
-```
+Real invite API calls returned success at the library-call level, but the target player did not receive an invite.
 
 Important conclusion from library source:
 
@@ -137,23 +128,44 @@ def invite_to_lobby(self, steam_id):
 
 So `invite_to_lobby` returning `None` is a false success when `self.lobby is None`.
 
-Current `/dota/lobby` state:
-
-```json
-{"lobby_exists":false,"lobby_id":null,"lobby_name":"Real Dota lobby not detected yet","mode":"real_pending","connected":true,"members":[]}
-```
-
-Current `/dota/create-lobby` result after waiting for `lobby_new` and `lobby_changed`:
+Last pre-patch `/dota/create-lobby` result:
 
 ```text
 DOTA_CREATE_LOBBY_OK {'create_result': 'None', 'events': [{'lobby_new': 'None'}, {'lobby_changed': 'None'}], 'lobby_detected': False, 'lobby_id': None, 'leader_id': None}
 ```
 
-So `create_practice_lobby()` sends the GC message but no `CSODOTALobby` shared object arrives; `self._dota.lobby` stays `None`.
+So `create_practice_lobby()` sent the GC message but no `CSODOTALobby` shared object arrived; `self._dota.lobby` stayed `None`.
+
+## Patch applied on 2026-05-07
+
+Commit:
+
+```text
+4c73b102bb05bf420fb6e6989f95c09e0c231c9c Keep Dota GC operations on one gevent worker
+```
+
+What changed in `app/dota_real_adapter.py`:
+
+- Verified `client.games_played([570])` was already present immediately after Steam login and before `Dota2Client(client)` / launch.
+- Replaced ad-hoc `asyncio.to_thread(...)` calls with one persistent `ThreadPoolExecutor(max_workers=1, thread_name_prefix='dota-gevent')`.
+- All Steam/Dota operations now run through `_run_sync(...)` on the same OS thread:
+  - Steam login
+  - `client.games_played([570])`
+  - `Dota2Client(client)`
+  - GC launch and `wait_event('ready')`
+  - practice lobby create
+  - invite calls
+- Added `dota_worker: single_thread_gevent_executor` to `/dota/status` for deploy verification.
+- Added `_idle_dota_sync(...)` using `gevent.sleep(...)` fallback to `time.sleep(...)` so Steam/Dota greenlets can process inbound GC/SOCache messages while waiting for lobby shared-object events.
+- Extended lobby creation wait loop to poll `lobby_new` / `lobby_changed` in shorter chunks for up to ~35 seconds while idling gevent.
+
+Reasoning:
+
+The `steam`/`dota2` libraries use gevent internally. The old code created the Steam/Dota session in one arbitrary asyncio worker thread and then later called create-lobby/invite from another arbitrary worker thread. That can leave SOCache and event processing on the wrong gevent hub. The new code keeps the full Dota lifecycle on one persistent worker thread.
 
 ## Dota library findings
 
-Library path:
+Library path on server:
 
 ```text
 /opt/dota-twitch-lobby-bot/streamer_proxy/.venv/lib/python3.13/site-packages/dota2/features/lobby.py
@@ -187,25 +199,6 @@ def create_tournament_lobby(self, password="", tournament_game_id=None, tourname
 
 `create_practice_lobby()` is fire-and-forget. Lobby appears only if SOCache receives `ESOType.CSODOTALobby` and emits `lobby_new` / `lobby_changed`.
 
-## Most recent code changes already pushed
-
-Recent streamer commits include:
-
-```text
-cb32ead Try Dota invite with multiple id variants
-e4d70ae Add Dota practice lobby creation endpoint
-308a9c6 Wait for Dota practice lobby creation event
-4277c81 Wait for Dota GC ready before lobby creation
-```
-
-Backend commits include Steam Guard input and Dota status in Control Center:
-
-```text
-13f8b67 Pass Steam Guard code from backend client
-05ab1fa Accept Steam Guard code in backend Dota connect route
-ec54329 Add Steam Guard input and Dota status to dashboard
-```
-
 ## Dota env shape
 
 ```env
@@ -222,9 +215,19 @@ Real Steam/Dota credentials stay in local `.env` only and must not be committed.
 
 `STEAM_SHARED_SECRET` is optional. For normal streamer onboarding, use a one-time Steam Guard code from the official Steam mobile app when calling `/dota/connect`.
 
-## Commands for next chat
+## Commands for server after this patch
 
-Check service and current status:
+Deploy current `main` and restart:
+
+```bash
+cd /opt/dota-lobby-streamer-proxy
+git pull --ff-only
+systemctl restart streamer-proxy
+sleep 2
+journalctl -u streamer-proxy -n 80 --no-pager
+```
+
+Check service and confirm the new worker flag:
 
 ```bash
 cd /opt/dota-lobby-streamer-proxy
@@ -232,8 +235,12 @@ KEY=$(grep '^PROXY_API_KEY=' .env | cut -d= -f2-)
 
 curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/status
 echo
-curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/lobby
-journalctl -u streamer-proxy -n 160 --no-pager
+```
+
+Expected after code deploy before reconnect:
+
+```text
+"dota_worker":"single_thread_gevent_executor"
 ```
 
 Connect after restart:
@@ -256,9 +263,12 @@ curl -i -X POST \
 
 curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/status
 echo
+curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/lobby
+echo
+journalctl -u streamer-proxy -n 180 --no-pager
 ```
 
-Try invite:
+Only after `lobby_detected=true`, try invite:
 
 ```bash
 REAL_STEAM_ID="76561198807245109"
@@ -269,22 +279,21 @@ curl -i -X POST \
   http://127.0.0.1:8081/dota/invite
 ```
 
-## Next investigation step
+## Next investigation step if lobby is still not detected
 
-The next assistant should continue from this exact blocker:
+Continue from this exact blocker:
 
 ```text
-Dota GC is ready, but create_practice_lobby does not produce lobby_new/lobby_changed and self._dota.lobby remains None.
+Dota GC is ready, single-thread gevent worker is active, but create_practice_lobby still does not produce lobby_new/lobby_changed and self._dota.lobby remains None.
 ```
 
 Recommended next attempts:
 
-1. Inspect Dota GC connection/state handling in `dota2/client.py` and `features/sharedobjects.py`.
-2. Verify whether `client.games_played([570])` must be called before `Dota2Client.launch()`; a patch was proposed but not confirmed as applied/pushed at the time of this doc update.
-3. Add `client.games_played([570])` immediately after Steam login and before `Dota2Client(client).launch()` if not already present.
-4. Inspect whether `Dota2Client` needs `idle()`/gevent loop cooperation while waiting for SOCache updates.
-5. Consider using `self._dota.send_job(...)` / `wait_msg(...)` for create lobby if a response message exists, but source currently uses fire-and-forget `send` for `EMsgGCPracticeLobbyCreate`.
-6. Continue only after reading `docs/CURRENT_STATUS.md`, `docs/AI_NOTES.md`, `docs/project_context.md`, and `PROJECT_FILES.txt` from GitHub `main`.
+1. On server, introspect installed `dota2/client.py`, `features/sharedobjects.py`, and `features/lobby.py` using `REAL_PY` above.
+2. Confirm whether `Dota2Client` exposes lower-level SOCache state or callbacks for `CSODOTALobby`.
+3. Inspect whether the create-lobby GC message needs different option fields for the installed Dota2 protocol version.
+4. Consider adding a temporary diagnostic endpoint that prints GC/SOCache object type names after create-lobby.
+5. Consider using `send_job(...)` / `wait_msg(...)` only if the installed protocol exposes a specific create-lobby response message; current library code uses fire-and-forget `send(...)` for `EMsgGCPracticeLobbyCreate`.
 
 ## AI workflow rule
 
