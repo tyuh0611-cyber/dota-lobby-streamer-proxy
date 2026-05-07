@@ -53,7 +53,7 @@ def run_presence_probe(real_adapter: Any, selected_variant: str | None = None) -
         entry['after'] = snapshot('after')
         results.append(entry)
 
-    from steam.core.msg import MsgProto
+    from steam.core.msg import Msg, MsgProto
     from steam.enums.emsg import EMsg
 
     def proto_570():
@@ -81,15 +81,23 @@ def run_presence_probe(real_adapter: Any, selected_variant: str | None = None) -
             'games_played': [{'game_id': 570, 'game_extra_info': 'Dota 2'}],
         })
 
-    def no_data_blob_570():
-        return client.send(MsgProto(EMsg.ClientGamesPlayedNoDataBlob), {
-            'games_played': [{'game_id': 570}],
-        })
+    def msg_no_data_blob_empty():
+        msg = Msg(EMsg.ClientGamesPlayedNoDataBlob)
+        return client.send(msg)
 
-    def with_data_blob_empty():
-        return client.send(MsgProto(EMsg.ClientGamesPlayedWithDataBlob), {
-            'games_played': [{'game_id': 570}],
-        })
+    def msg_no_data_blob_570_attr():
+        msg = Msg(EMsg.ClientGamesPlayedNoDataBlob)
+        msg.body.game_id = 570
+        return client.send(msg)
+
+    def msg_no_data_blob_570_gameid_attr():
+        msg = Msg(EMsg.ClientGamesPlayedNoDataBlob)
+        msg.body.game_id = (1 << 24) | 570
+        return client.send(msg)
+
+    def msg_with_data_blob_empty():
+        msg = Msg(EMsg.ClientGamesPlayedWithDataBlob)
+        return client.send(msg)
 
     variants = {
         'standard': proto_570,
@@ -97,8 +105,10 @@ def run_presence_probe(real_adapter: Any, selected_variant: str | None = None) -
         'type1_or_app': proto_gameid_type1_or_app,
         'type2_or_app': proto_gameid_type2_or_app,
         'extra_info': proto_with_extra_info,
-        'no_data_blob': no_data_blob_570,
-        'with_data_blob_empty': with_data_blob_empty,
+        'msg_no_data_blob_empty': msg_no_data_blob_empty,
+        'msg_no_data_blob_570_attr': msg_no_data_blob_570_attr,
+        'msg_no_data_blob_570_gameid_attr': msg_no_data_blob_570_gameid_attr,
+        'msg_with_data_blob_empty': msg_with_data_blob_empty,
     }
 
     if selected_variant:
