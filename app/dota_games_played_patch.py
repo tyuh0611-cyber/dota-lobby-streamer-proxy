@@ -7,7 +7,7 @@ def patch_skip_prelaunch_games_played() -> None:
     original_games_played = SteamClient.games_played
 
     def _connect_sync(self, *args, **kwargs):
-        skipped_first_570 = {'done': False}
+        call_count = {'count': 0}
         listeners_attached = {'done': False}
 
         def attach_steam_debug_listeners(steam_client):
@@ -45,18 +45,19 @@ def patch_skip_prelaunch_games_played() -> None:
 
         def games_played_guard(steam_client, games):
             attach_steam_debug_listeners(steam_client)
+            call_count['count'] += 1
             logged_on = getattr(steam_client, 'logged_on', None)
             steam_id = getattr(steam_client, 'steam_id', None)
             print(
                 'STEAM_GAMES_PLAYED_CALL', games,
+                'count', call_count['count'],
                 'logged_on', logged_on,
                 'steam_id', steam_id,
                 'connected', getattr(steam_client, 'connected', None),
                 flush=True,
             )
-            if not skipped_first_570['done'] and list(games or []) == [570]:
-                skipped_first_570['done'] = True
-                print('STEAM_GAMES_PLAYED_SKIP_PRELAUNCH_570', flush=True)
+            if call_count['count'] > 1 and list(games or []) == [570]:
+                print('STEAM_GAMES_PLAYED_SKIP_DUPLICATE_570', flush=True)
                 return None
             return original_games_played(steam_client, games)
 
