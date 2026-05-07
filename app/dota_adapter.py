@@ -4,10 +4,12 @@ from .config import settings
 from .dota_games_played_patch import patch_skip_prelaunch_games_played
 from .dota_lobby_diagnostics import patch_real_dota_adapter_create_lobby
 from .dota_probe import collect_dota_probe
+from .dota_ready_patch import patch_real_dota_ready_check
 from .dota_real_adapter import real_dota_adapter
 from .schemas import InviteResult, LobbyMember, LobbyState
 
 patch_skip_prelaunch_games_played()
+patch_real_dota_ready_check()
 patch_real_dota_adapter_create_lobby()
 
 
