@@ -56,25 +56,34 @@ def run_presence_probe(real_adapter: Any, selected_variant: str | None = None) -
     from steam.core.msg import Msg, MsgProto
     from steam.enums.emsg import EMsg
 
-    def proto_570():
+    def send_proto_games(game_ids):
         return client.send(MsgProto(EMsg.ClientGamesPlayed), {
-            'games_played': [{'game_id': 570}],
+            'games_played': [{'game_id': int(game_id)} for game_id in game_ids],
         })
+
+    def proto_clear_empty():
+        return send_proto_games([])
+
+    def proto_570():
+        return send_proto_games([570])
+
+    def proto_440():
+        return send_proto_games([440])
+
+    def proto_730():
+        return send_proto_games([730])
 
     def proto_gameid_shifted():
-        return client.send(MsgProto(EMsg.ClientGamesPlayed), {
-            'games_played': [{'game_id': 570 << 24}],
-        })
+        return send_proto_games([570 << 24])
 
     def proto_gameid_type1_or_app():
-        return client.send(MsgProto(EMsg.ClientGamesPlayed), {
-            'games_played': [{'game_id': (1 << 24) | 570}],
-        })
+        return send_proto_games([(1 << 24) | 570])
 
     def proto_gameid_type2_or_app():
-        return client.send(MsgProto(EMsg.ClientGamesPlayed), {
-            'games_played': [{'game_id': (2 << 24) | 570}],
-        })
+        return send_proto_games([(2 << 24) | 570])
+
+    def proto_multi_type1_and_app():
+        return send_proto_games([(1 << 24) | 570, 570])
 
     def proto_with_extra_info():
         return client.send(MsgProto(EMsg.ClientGamesPlayed), {
@@ -100,10 +109,14 @@ def run_presence_probe(real_adapter: Any, selected_variant: str | None = None) -
         return client.send(msg)
 
     variants = {
+        'clear_empty': proto_clear_empty,
         'standard': proto_570,
+        'app_440': proto_440,
+        'app_730': proto_730,
         'shifted': proto_gameid_shifted,
         'type1_or_app': proto_gameid_type1_or_app,
         'type2_or_app': proto_gameid_type2_or_app,
+        'multi_type1_and_app': proto_multi_type1_and_app,
         'extra_info': proto_with_extra_info,
         'msg_no_data_blob_empty': msg_no_data_blob_empty,
         'msg_no_data_blob_570_attr': msg_no_data_blob_570_attr,
