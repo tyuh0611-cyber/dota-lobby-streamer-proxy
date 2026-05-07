@@ -90,8 +90,7 @@ def patch_skip_prelaunch_games_played() -> None:
             )
             if list(games or []) == [570]:
                 ensure_dota_free_license(steam_client)
-            if call_count['count'] > 1 and list(games or []) == [570]:
-                print('STEAM_GAMES_PLAYED_SKIP_DUPLICATE_570', flush=True)
+                print('STEAM_GAMES_PLAYED_BLOCK_ALL_570_TO_TEST_DISCONNECT', flush=True)
                 return None
             return original_games_played(steam_client, games)
 
