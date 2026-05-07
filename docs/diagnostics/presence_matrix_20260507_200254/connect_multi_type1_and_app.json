@@ -1,0 +1,1 @@
+{"ok":true,"mode":"real_pending","connected":true,"gc_started":false,"login_result":"1","gc_result":"launch: None; ready_event: None; ticks: 11; knock_started: True; dota_ready: False; steam_logged_on: True; connection_status: 2","gc_error":"dota_gc_not_ready_after_launch","message":"Steam login completed. Dota GC launch was attempted."}

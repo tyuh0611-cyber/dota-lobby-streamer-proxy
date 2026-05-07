@@ -1,0 +1,240 @@
+May 07 12:25:47 311341.fornex.cloud uvicorn[51789]: DOTA_GC_WAIT_ONLY_TICK 10 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:25:52 311341.fornex.cloud uvicorn[51789]: DOTA_GC_WAIT_ONLY_TICK 11 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:25:53 311341.fornex.cloud uvicorn[51789]: DOTA_GC_READY_FALSE launch: None; ready_event: None; ticks: 11; knock_started: True; dota_ready: False; steam_logged_on: True; connection_status: 2 dota_gc_not_ready_after_launch
+May 07 12:25:53 311341.fornex.cloud uvicorn[51789]: STEAM_AFTER_CONNECT_SYNC result 1 logged_on True steam_id 76561198821142447 games [570] connected True dota_ready False dota_status 2
+May 07 12:25:53 311341.fornex.cloud uvicorn[51789]: INFO:     127.0.0.1:35568 - "POST /dota/connect HTTP/1.1" 200 OK
+May 07 12:25:56 311341.fornex.cloud uvicorn[51789]: INFO:     127.0.0.1:45848 - "POST /dota/presence-probe HTTP/1.1" 200 OK
+May 07 12:26:17 311341.fornex.cloud systemd[1]: Stopping streamer-proxy.service - Dota Lobby Streamer Proxy...
+May 07 12:26:17 311341.fornex.cloud uvicorn[51789]: INFO:     Shutting down
+May 07 12:26:17 311341.fornex.cloud uvicorn[51789]: INFO:     Waiting for application shutdown.
+May 07 12:26:17 311341.fornex.cloud uvicorn[51789]: INFO:     Application shutdown complete.
+May 07 12:26:17 311341.fornex.cloud uvicorn[51789]: INFO:     Finished server process [51789]
+May 07 12:26:17 311341.fornex.cloud systemd[1]: streamer-proxy.service: Deactivated successfully.
+May 07 12:26:17 311341.fornex.cloud systemd[1]: Stopped streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 12:26:17 311341.fornex.cloud systemd[1]: streamer-proxy.service: Consumed 1.666s CPU time, 106.1M memory peak.
+May 07 12:26:17 311341.fornex.cloud systemd[1]: Started streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 12:26:18 311341.fornex.cloud uvicorn[51850]: INFO:     Started server process [51850]
+May 07 12:26:18 311341.fornex.cloud uvicorn[51850]: INFO:     Waiting for application startup.
+May 07 12:26:18 311341.fornex.cloud uvicorn[51850]: INFO:     Application startup complete.
+May 07 12:26:18 311341.fornex.cloud uvicorn[51850]: INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+May 07 12:26:22 311341.fornex.cloud uvicorn[51850]: STEAM_GAMES_PLAYED_CALL [570] count 1 logged_on True steam_id 76561198821142447 connected True
+May 07 12:26:22 311341.fornex.cloud uvicorn[51850]: STEAM_DOTA_LICENSE_REQUEST (<EResult.OK: 1>, [570], [])
+May 07 12:26:23 311341.fornex.cloud uvicorn[51850]: STEAM_GAMES_PLAYED_CUSTOM_570_SENT type1_or_app 16777786 None
+May 07 12:26:23 311341.fornex.cloud uvicorn[51850]: STEAM_GAMES_PLAYED_OK 570
+May 07 12:26:23 311341.fornex.cloud uvicorn[51850]: DOTA_GC_KNOCK_LOOP_FORCED
+May 07 12:26:28 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 1 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:26:34 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 2 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:26:39 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 3 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:26:45 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 4 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:26:50 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 5 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:26:56 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 6 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:27:02 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 7 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:27:07 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 8 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:27:13 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 9 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:27:18 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 10 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:27:24 311341.fornex.cloud uvicorn[51850]: DOTA_GC_WAIT_ONLY_TICK 11 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 12:27:24 311341.fornex.cloud uvicorn[51850]: DOTA_GC_READY_FALSE launch: None; ready_event: None; ticks: 11; knock_started: True; dota_ready: False; steam_logged_on: True; connection_status: 2 dota_gc_not_ready_after_launch
+May 07 12:27:24 311341.fornex.cloud uvicorn[51850]: STEAM_AFTER_CONNECT_SYNC result 1 logged_on True steam_id 76561198821142447 games [570] connected True dota_ready False dota_status 2
+May 07 12:27:24 311341.fornex.cloud uvicorn[51850]: INFO:     127.0.0.1:42258 - "POST /dota/connect HTTP/1.1" 200 OK
+May 07 12:27:27 311341.fornex.cloud uvicorn[51850]: INFO:     127.0.0.1:49046 - "POST /dota/presence-probe HTTP/1.1" 200 OK
+May 07 13:12:22 311341.fornex.cloud uvicorn[51850]: INFO:     175.210.58.175:50371 - "GET / HTTP/1.0" 404 Not Found
+May 07 13:24:40 311341.fornex.cloud uvicorn[51850]: INFO:     95.214.55.226:55282 - "GET /config HTTP/1.1" 404 Not Found
+May 07 14:58:42 311341.fornex.cloud uvicorn[51850]: INFO:     139.59.43.162:40772 - "GET / HTTP/1.1" 404 Not Found
+May 07 14:58:43 311341.fornex.cloud uvicorn[51850]: INFO:     139.59.43.162:40780 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+May 07 15:25:04 311341.fornex.cloud uvicorn[51850]: INFO:     45.198.224.5:40724 - "GET /login HTTP/1.1" 404 Not Found
+May 07 18:39:05 311341.fornex.cloud uvicorn[51850]: INFO:     151.243.11.245:58938 - "GET / HTTP/1.1" 404 Not Found
+May 07 19:56:41 311341.fornex.cloud systemd[1]: Stopping streamer-proxy.service - Dota Lobby Streamer Proxy...
+May 07 19:56:41 311341.fornex.cloud uvicorn[51850]: INFO:     Shutting down
+May 07 19:56:41 311341.fornex.cloud uvicorn[51850]: INFO:     Waiting for application shutdown.
+May 07 19:56:41 311341.fornex.cloud uvicorn[51850]: INFO:     Application shutdown complete.
+May 07 19:56:41 311341.fornex.cloud uvicorn[51850]: INFO:     Finished server process [51850]
+May 07 19:56:41 311341.fornex.cloud systemd[1]: streamer-proxy.service: Deactivated successfully.
+May 07 19:56:41 311341.fornex.cloud systemd[1]: Stopped streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 19:56:41 311341.fornex.cloud systemd[1]: streamer-proxy.service: Consumed 1min 10.070s CPU time, 107M memory peak.
+May 07 19:56:41 311341.fornex.cloud systemd[1]: Started streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 19:56:42 311341.fornex.cloud uvicorn[65323]: INFO:     Started server process [65323]
+May 07 19:56:42 311341.fornex.cloud uvicorn[65323]: INFO:     Waiting for application startup.
+May 07 19:56:42 311341.fornex.cloud uvicorn[65323]: INFO:     Application startup complete.
+May 07 19:56:42 311341.fornex.cloud uvicorn[65323]: INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+May 07 19:56:45 311341.fornex.cloud uvicorn[65323]: STEAM_GAMES_PLAYED_CALL [570] count 1 logged_on True steam_id 76561198821142447 connected True
+May 07 19:56:46 311341.fornex.cloud uvicorn[65323]: STEAM_DOTA_LICENSE_REQUEST (<EResult.OK: 1>, [570], [])
+May 07 19:56:47 311341.fornex.cloud uvicorn[65323]: STEAM_GAMES_PLAYED_CUSTOM_570_SENT type1_or_app 16777786 None
+May 07 19:56:47 311341.fornex.cloud uvicorn[65323]: STEAM_GAMES_PLAYED_OK 570
+May 07 19:56:47 311341.fornex.cloud uvicorn[65323]: DOTA_GC_KNOCK_LOOP_FORCED
+May 07 19:56:52 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 1 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:56:58 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 2 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:57:03 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 3 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:57:09 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 4 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:57:14 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 5 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:57:20 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 6 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:57:25 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 7 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:57:31 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 8 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:57:36 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 9 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:57:42 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 10 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:57:47 311341.fornex.cloud uvicorn[65323]: DOTA_GC_WAIT_ONLY_TICK 11 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 19:57:48 311341.fornex.cloud uvicorn[65323]: DOTA_GC_READY_FALSE launch: None; ready_event: None; ticks: 11; knock_started: True; dota_ready: False; steam_logged_on: True; connection_status: 2 dota_gc_not_ready_after_launch
+May 07 19:57:48 311341.fornex.cloud uvicorn[65323]: STEAM_AFTER_CONNECT_SYNC result 1 logged_on True steam_id 76561198821142447 games [570] connected True dota_ready False dota_status 2
+May 07 19:57:48 311341.fornex.cloud uvicorn[65323]: INFO:     127.0.0.1:43294 - "POST /dota/connect HTTP/1.1" 200 OK
+May 07 19:57:51 311341.fornex.cloud uvicorn[65323]: INFO:     127.0.0.1:50402 - "POST /dota/presence-probe HTTP/1.1" 200 OK
+May 07 19:57:51 311341.fornex.cloud systemd[1]: Stopping streamer-proxy.service - Dota Lobby Streamer Proxy...
+May 07 19:57:51 311341.fornex.cloud uvicorn[65323]: INFO:     Shutting down
+May 07 19:57:51 311341.fornex.cloud uvicorn[65323]: INFO:     Waiting for application shutdown.
+May 07 19:57:51 311341.fornex.cloud uvicorn[65323]: INFO:     Application shutdown complete.
+May 07 19:57:51 311341.fornex.cloud uvicorn[65323]: INFO:     Finished server process [65323]
+May 07 19:57:51 311341.fornex.cloud systemd[1]: streamer-proxy.service: Deactivated successfully.
+May 07 19:57:51 311341.fornex.cloud systemd[1]: Stopped streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 19:57:51 311341.fornex.cloud systemd[1]: streamer-proxy.service: Consumed 1.694s CPU time, 106.1M memory peak.
+May 07 19:57:51 311341.fornex.cloud systemd[1]: Started streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 19:57:52 311341.fornex.cloud uvicorn[65370]: INFO:     Started server process [65370]
+May 07 19:57:52 311341.fornex.cloud uvicorn[65370]: INFO:     Waiting for application startup.
+May 07 19:57:52 311341.fornex.cloud uvicorn[65370]: INFO:     Application startup complete.
+May 07 19:57:52 311341.fornex.cloud uvicorn[65370]: INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+May 07 19:57:55 311341.fornex.cloud uvicorn[65370]: STEAM_GAMES_PLAYED_CALL [570] count 1 logged_on False steam_id 0 connected False
+May 07 19:57:55 311341.fornex.cloud uvicorn[65370]: STEAM_DOTA_LICENSE_SKIP_NOT_LOGGED_ON logged_on False steam_id 0 connected False
+May 07 19:57:55 311341.fornex.cloud uvicorn[65370]: STEAM_GAMES_PLAYED_SKIP_NOT_LOGGED_ON logged_on False steam_id 0 connected False
+May 07 19:57:55 311341.fornex.cloud uvicorn[65370]: STEAM_GAMES_PLAYED_OK 570
+May 07 19:57:55 311341.fornex.cloud uvicorn[65370]: DOTA_GC_KNOCK_LOOP_FORCED
+May 07 19:57:55 311341.fornex.cloud uvicorn[65370]: DOTA_GC_READY_FALSE launch: None; ready_event: None; ticks: 0; knock_started: True; dota_ready: False; steam_logged_on: False; connection_status: 2 steam_disconnected_before_dota_ready
+May 07 19:57:55 311341.fornex.cloud uvicorn[65370]: STEAM_AFTER_CONNECT_SYNC result 88 logged_on False steam_id 0 games [] connected False dota_ready False dota_status 2
+May 07 19:57:55 311341.fornex.cloud uvicorn[65370]: INFO:     127.0.0.1:50412 - "POST /dota/connect HTTP/1.1" 200 OK
+May 07 19:57:55 311341.fornex.cloud uvicorn[65370]: STEAM_EVENT error args (<EResult.TwoFactorCodeMismatch: 88>,) kwargs {} logged_on False steam_id 0 connected False
+May 07 19:57:55 311341.fornex.cloud uvicorn[65370]: STEAM_EVENT disconnected args () kwargs {} logged_on False steam_id 0 connected False
+May 07 19:57:58 311341.fornex.cloud uvicorn[65370]: INFO:     127.0.0.1:47904 - "POST /dota/presence-probe HTTP/1.1" 200 OK
+May 07 19:57:58 311341.fornex.cloud systemd[1]: Stopping streamer-proxy.service - Dota Lobby Streamer Proxy...
+May 07 19:57:58 311341.fornex.cloud uvicorn[65370]: INFO:     Shutting down
+May 07 19:57:58 311341.fornex.cloud uvicorn[65370]: INFO:     Waiting for application shutdown.
+May 07 19:57:58 311341.fornex.cloud uvicorn[65370]: INFO:     Application shutdown complete.
+May 07 19:57:58 311341.fornex.cloud uvicorn[65370]: INFO:     Finished server process [65370]
+May 07 19:57:58 311341.fornex.cloud systemd[1]: streamer-proxy.service: Deactivated successfully.
+May 07 19:57:58 311341.fornex.cloud systemd[1]: Stopped streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 19:57:58 311341.fornex.cloud systemd[1]: streamer-proxy.service: Consumed 1.323s CPU time, 104.8M memory peak.
+May 07 19:57:58 311341.fornex.cloud systemd[1]: Started streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 19:57:59 311341.fornex.cloud uvicorn[65399]: INFO:     Started server process [65399]
+May 07 19:57:59 311341.fornex.cloud uvicorn[65399]: INFO:     Waiting for application startup.
+May 07 19:57:59 311341.fornex.cloud uvicorn[65399]: INFO:     Application startup complete.
+May 07 19:57:59 311341.fornex.cloud uvicorn[65399]: INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+May 07 19:58:01 311341.fornex.cloud uvicorn[65399]: STEAM_GAMES_PLAYED_CALL [570] count 1 logged_on False steam_id 0 connected False
+May 07 19:58:01 311341.fornex.cloud uvicorn[65399]: STEAM_DOTA_LICENSE_SKIP_NOT_LOGGED_ON logged_on False steam_id 0 connected False
+May 07 19:58:01 311341.fornex.cloud uvicorn[65399]: STEAM_GAMES_PLAYED_SKIP_NOT_LOGGED_ON logged_on False steam_id 0 connected False
+May 07 19:58:01 311341.fornex.cloud uvicorn[65399]: STEAM_GAMES_PLAYED_OK 570
+May 07 19:58:01 311341.fornex.cloud uvicorn[65399]: DOTA_GC_KNOCK_LOOP_FORCED
+May 07 19:58:01 311341.fornex.cloud uvicorn[65399]: DOTA_GC_READY_FALSE launch: None; ready_event: None; ticks: 0; knock_started: True; dota_ready: False; steam_logged_on: False; connection_status: 2 steam_disconnected_before_dota_ready
+May 07 19:58:01 311341.fornex.cloud uvicorn[65399]: STEAM_AFTER_CONNECT_SYNC result 88 logged_on False steam_id 0 games [] connected False dota_ready False dota_status 2
+May 07 19:58:01 311341.fornex.cloud uvicorn[65399]: INFO:     127.0.0.1:47908 - "POST /dota/connect HTTP/1.1" 200 OK
+May 07 19:58:01 311341.fornex.cloud uvicorn[65399]: STEAM_EVENT error args (<EResult.TwoFactorCodeMismatch: 88>,) kwargs {} logged_on False steam_id 0 connected False
+May 07 19:58:01 311341.fornex.cloud uvicorn[65399]: STEAM_EVENT disconnected args () kwargs {} logged_on False steam_id 0 connected False
+May 07 19:58:04 311341.fornex.cloud uvicorn[65399]: INFO:     127.0.0.1:47922 - "POST /dota/presence-probe HTTP/1.1" 200 OK
+May 07 19:58:04 311341.fornex.cloud systemd[1]: Stopping streamer-proxy.service - Dota Lobby Streamer Proxy...
+May 07 19:58:04 311341.fornex.cloud uvicorn[65399]: INFO:     Shutting down
+May 07 19:58:04 311341.fornex.cloud uvicorn[65399]: INFO:     Waiting for application shutdown.
+May 07 19:58:04 311341.fornex.cloud uvicorn[65399]: INFO:     Application shutdown complete.
+May 07 19:58:04 311341.fornex.cloud uvicorn[65399]: INFO:     Finished server process [65399]
+May 07 19:58:04 311341.fornex.cloud systemd[1]: streamer-proxy.service: Deactivated successfully.
+May 07 19:58:04 311341.fornex.cloud systemd[1]: Stopped streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 19:58:04 311341.fornex.cloud systemd[1]: streamer-proxy.service: Consumed 1.307s CPU time, 105M memory peak.
+May 07 19:58:04 311341.fornex.cloud systemd[1]: Started streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 19:58:05 311341.fornex.cloud uvicorn[65426]: INFO:     Started server process [65426]
+May 07 19:58:05 311341.fornex.cloud uvicorn[65426]: INFO:     Waiting for application startup.
+May 07 19:58:05 311341.fornex.cloud uvicorn[65426]: INFO:     Application startup complete.
+May 07 19:58:05 311341.fornex.cloud uvicorn[65426]: INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+May 07 19:58:08 311341.fornex.cloud uvicorn[65426]: STEAM_GAMES_PLAYED_CALL [570] count 1 logged_on False steam_id 0 connected False
+May 07 19:58:08 311341.fornex.cloud uvicorn[65426]: STEAM_DOTA_LICENSE_SKIP_NOT_LOGGED_ON logged_on False steam_id 0 connected False
+May 07 19:58:08 311341.fornex.cloud uvicorn[65426]: STEAM_GAMES_PLAYED_SKIP_NOT_LOGGED_ON logged_on False steam_id 0 connected False
+May 07 19:58:08 311341.fornex.cloud uvicorn[65426]: STEAM_GAMES_PLAYED_OK 570
+May 07 19:58:08 311341.fornex.cloud uvicorn[65426]: DOTA_GC_KNOCK_LOOP_FORCED
+May 07 19:58:08 311341.fornex.cloud uvicorn[65426]: DOTA_GC_READY_FALSE launch: None; ready_event: None; ticks: 0; knock_started: True; dota_ready: False; steam_logged_on: False; connection_status: 2 steam_disconnected_before_dota_ready
+May 07 19:58:08 311341.fornex.cloud uvicorn[65426]: STEAM_AFTER_CONNECT_SYNC result 88 logged_on False steam_id 0 games [] connected False dota_ready False dota_status 2
+May 07 19:58:08 311341.fornex.cloud uvicorn[65426]: INFO:     127.0.0.1:42640 - "POST /dota/connect HTTP/1.1" 200 OK
+May 07 19:58:08 311341.fornex.cloud uvicorn[65426]: STEAM_EVENT error args (<EResult.TwoFactorCodeMismatch: 88>,) kwargs {} logged_on False steam_id 0 connected False
+May 07 19:58:08 311341.fornex.cloud uvicorn[65426]: STEAM_EVENT disconnected args () kwargs {} logged_on False steam_id 0 connected False
+May 07 19:58:11 311341.fornex.cloud uvicorn[65426]: INFO:     127.0.0.1:42656 - "POST /dota/presence-probe HTTP/1.1" 200 OK
+May 07 20:02:54 311341.fornex.cloud systemd[1]: Stopping streamer-proxy.service - Dota Lobby Streamer Proxy...
+May 07 20:02:54 311341.fornex.cloud uvicorn[65426]: INFO:     Shutting down
+May 07 20:02:54 311341.fornex.cloud uvicorn[65426]: INFO:     Waiting for application shutdown.
+May 07 20:02:54 311341.fornex.cloud uvicorn[65426]: INFO:     Application shutdown complete.
+May 07 20:02:54 311341.fornex.cloud uvicorn[65426]: INFO:     Finished server process [65426]
+May 07 20:02:54 311341.fornex.cloud systemd[1]: streamer-proxy.service: Deactivated successfully.
+May 07 20:02:54 311341.fornex.cloud systemd[1]: Stopped streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 20:02:54 311341.fornex.cloud systemd[1]: streamer-proxy.service: Consumed 2.053s CPU time, 105.9M memory peak.
+May 07 20:02:54 311341.fornex.cloud systemd[1]: Started streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 20:02:55 311341.fornex.cloud uvicorn[65618]: INFO:     Started server process [65618]
+May 07 20:02:55 311341.fornex.cloud uvicorn[65618]: INFO:     Waiting for application startup.
+May 07 20:02:55 311341.fornex.cloud uvicorn[65618]: INFO:     Application startup complete.
+May 07 20:02:55 311341.fornex.cloud uvicorn[65618]: INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+May 07 20:03:08 311341.fornex.cloud uvicorn[65618]: STEAM_GAMES_PLAYED_CALL [570] count 1 logged_on False steam_id 0 connected False
+May 07 20:03:08 311341.fornex.cloud uvicorn[65618]: STEAM_DOTA_LICENSE_SKIP_NOT_LOGGED_ON logged_on False steam_id 0 connected False
+May 07 20:03:08 311341.fornex.cloud uvicorn[65618]: STEAM_GAMES_PLAYED_SKIP_NOT_LOGGED_ON logged_on False steam_id 0 connected False
+May 07 20:03:08 311341.fornex.cloud uvicorn[65618]: STEAM_GAMES_PLAYED_OK 570
+May 07 20:03:08 311341.fornex.cloud uvicorn[65618]: DOTA_GC_KNOCK_LOOP_FORCED
+May 07 20:03:08 311341.fornex.cloud uvicorn[65618]: DOTA_GC_READY_FALSE launch: None; ready_event: None; ticks: 0; knock_started: True; dota_ready: False; steam_logged_on: False; connection_status: 2 steam_disconnected_before_dota_ready
+May 07 20:03:08 311341.fornex.cloud uvicorn[65618]: STEAM_AFTER_CONNECT_SYNC result 88 logged_on False steam_id 0 games [] connected False dota_ready False dota_status 2
+May 07 20:03:08 311341.fornex.cloud uvicorn[65618]: INFO:     127.0.0.1:59376 - "POST /dota/connect HTTP/1.1" 200 OK
+May 07 20:03:08 311341.fornex.cloud uvicorn[65618]: STEAM_EVENT error args (<EResult.TwoFactorCodeMismatch: 88>,) kwargs {} logged_on False steam_id 0 connected False
+May 07 20:03:08 311341.fornex.cloud uvicorn[65618]: STEAM_EVENT disconnected args () kwargs {} logged_on False steam_id 0 connected False
+May 07 20:03:11 311341.fornex.cloud uvicorn[65618]: INFO:     127.0.0.1:59392 - "POST /dota/presence-probe HTTP/1.1" 200 OK
+May 07 20:03:11 311341.fornex.cloud systemd[1]: Stopping streamer-proxy.service - Dota Lobby Streamer Proxy...
+May 07 20:03:11 311341.fornex.cloud uvicorn[65618]: INFO:     Shutting down
+May 07 20:03:11 311341.fornex.cloud uvicorn[65618]: INFO:     Waiting for application shutdown.
+May 07 20:03:11 311341.fornex.cloud uvicorn[65618]: INFO:     Application shutdown complete.
+May 07 20:03:11 311341.fornex.cloud uvicorn[65618]: INFO:     Finished server process [65618]
+May 07 20:03:11 311341.fornex.cloud systemd[1]: streamer-proxy.service: Deactivated successfully.
+May 07 20:03:11 311341.fornex.cloud systemd[1]: Stopped streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 20:03:11 311341.fornex.cloud systemd[1]: streamer-proxy.service: Consumed 1.486s CPU time, 105M memory peak.
+May 07 20:03:11 311341.fornex.cloud systemd[1]: Started streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 20:03:12 311341.fornex.cloud uvicorn[65663]: INFO:     Started server process [65663]
+May 07 20:03:12 311341.fornex.cloud uvicorn[65663]: INFO:     Waiting for application startup.
+May 07 20:03:12 311341.fornex.cloud uvicorn[65663]: INFO:     Application startup complete.
+May 07 20:03:12 311341.fornex.cloud uvicorn[65663]: INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+May 07 20:03:23 311341.fornex.cloud uvicorn[65663]: STEAM_GAMES_PLAYED_CALL [570] count 1 logged_on True steam_id 76561198821142447 connected True
+May 07 20:03:24 311341.fornex.cloud uvicorn[65663]: STEAM_DOTA_LICENSE_REQUEST (<EResult.OK: 1>, [570], [])
+May 07 20:03:25 311341.fornex.cloud uvicorn[65663]: STEAM_GAMES_PLAYED_CUSTOM_570_SENT type1_or_app 16777786 None
+May 07 20:03:25 311341.fornex.cloud uvicorn[65663]: STEAM_GAMES_PLAYED_OK 570
+May 07 20:03:25 311341.fornex.cloud uvicorn[65663]: DOTA_GC_KNOCK_LOOP_FORCED
+May 07 20:03:30 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 1 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:03:35 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 2 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:03:41 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 3 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:03:46 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 4 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:03:52 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 5 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:03:57 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 6 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:04:03 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 7 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:04:08 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 8 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:04:14 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 9 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:04:19 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 10 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:04:25 311341.fornex.cloud uvicorn[65663]: DOTA_GC_WAIT_ONLY_TICK 11 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:04:25 311341.fornex.cloud uvicorn[65663]: DOTA_GC_READY_FALSE launch: None; ready_event: None; ticks: 11; knock_started: True; dota_ready: False; steam_logged_on: True; connection_status: 2 dota_gc_not_ready_after_launch
+May 07 20:04:25 311341.fornex.cloud uvicorn[65663]: STEAM_AFTER_CONNECT_SYNC result 1 logged_on True steam_id 76561198821142447 games [570] connected True dota_ready False dota_status 2
+May 07 20:04:25 311341.fornex.cloud uvicorn[65663]: INFO:     127.0.0.1:52190 - "POST /dota/connect HTTP/1.1" 200 OK
+May 07 20:04:28 311341.fornex.cloud uvicorn[65663]: INFO:     127.0.0.1:48904 - "POST /dota/presence-probe HTTP/1.1" 200 OK
+May 07 20:04:28 311341.fornex.cloud systemd[1]: Stopping streamer-proxy.service - Dota Lobby Streamer Proxy...
+May 07 20:04:29 311341.fornex.cloud uvicorn[65663]: INFO:     Shutting down
+May 07 20:04:29 311341.fornex.cloud uvicorn[65663]: INFO:     Waiting for application shutdown.
+May 07 20:04:29 311341.fornex.cloud uvicorn[65663]: INFO:     Application shutdown complete.
+May 07 20:04:29 311341.fornex.cloud uvicorn[65663]: INFO:     Finished server process [65663]
+May 07 20:04:29 311341.fornex.cloud systemd[1]: streamer-proxy.service: Deactivated successfully.
+May 07 20:04:29 311341.fornex.cloud systemd[1]: Stopped streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 20:04:29 311341.fornex.cloud systemd[1]: streamer-proxy.service: Consumed 1.623s CPU time, 105.9M memory peak.
+May 07 20:04:29 311341.fornex.cloud systemd[1]: Started streamer-proxy.service - Dota Lobby Streamer Proxy.
+May 07 20:04:30 311341.fornex.cloud uvicorn[65729]: INFO:     Started server process [65729]
+May 07 20:04:30 311341.fornex.cloud uvicorn[65729]: INFO:     Waiting for application startup.
+May 07 20:04:30 311341.fornex.cloud uvicorn[65729]: INFO:     Application startup complete.
+May 07 20:04:30 311341.fornex.cloud uvicorn[65729]: INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+May 07 20:04:38 311341.fornex.cloud uvicorn[65729]: STEAM_GAMES_PLAYED_CALL [570] count 1 logged_on True steam_id 76561198821142447 connected True
+May 07 20:04:39 311341.fornex.cloud uvicorn[65729]: STEAM_DOTA_LICENSE_REQUEST (<EResult.OK: 1>, [570], [])
+May 07 20:04:40 311341.fornex.cloud uvicorn[65729]: STEAM_GAMES_PLAYED_CUSTOM_570_SENT type1_or_app 16777786 None
+May 07 20:04:40 311341.fornex.cloud uvicorn[65729]: STEAM_GAMES_PLAYED_OK 570
+May 07 20:04:40 311341.fornex.cloud uvicorn[65729]: DOTA_GC_KNOCK_LOOP_FORCED
+May 07 20:04:45 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 1 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:04:50 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 2 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:04:56 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 3 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:05:01 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 4 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:05:07 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 5 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:05:12 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 6 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:05:18 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 7 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:05:23 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 8 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:05:29 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 9 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:05:34 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 10 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:05:40 311341.fornex.cloud uvicorn[65729]: DOTA_GC_WAIT_ONLY_TICK 11 event None knock_started True steam_logged_on True steam_id 76561198821142447 dota_ready False dota_status 2
+May 07 20:05:40 311341.fornex.cloud uvicorn[65729]: DOTA_GC_READY_FALSE launch: None; ready_event: None; ticks: 11; knock_started: True; dota_ready: False; steam_logged_on: True; connection_status: 2 dota_gc_not_ready_after_launch
+May 07 20:05:40 311341.fornex.cloud uvicorn[65729]: STEAM_AFTER_CONNECT_SYNC result 1 logged_on True steam_id 76561198821142447 games [570] connected True dota_ready False dota_status 2
+May 07 20:05:40 311341.fornex.cloud uvicorn[65729]: INFO:     127.0.0.1:49374 - "POST /dota/connect HTTP/1.1" 200 OK
+May 07 20:05:43 311341.fornex.cloud uvicorn[65729]: INFO:     127.0.0.1:34324 - "POST /dota/presence-probe HTTP/1.1" 200 OK

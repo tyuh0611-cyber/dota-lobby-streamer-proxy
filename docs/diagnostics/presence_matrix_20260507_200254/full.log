@@ -1,0 +1,57 @@
+Run dir: docs/diagnostics/presence_matrix_20260507_200254
+===== clear_empty =====
+variant=clear_empty
+login_result=88
+gc_started=False
+after_logged_on=False
+after_connected=False
+send_error=
+===== app_440 =====
+variant=app_440
+login_result=1
+gc_started=False
+after_logged_on=True
+after_connected=True
+send_error=
+===== app_730 =====
+variant=app_730
+login_result=1
+gc_started=False
+after_logged_on=True
+after_connected=True
+send_error=
+===== standard =====
+variant=standard
+login_result=1
+gc_started=True
+after_logged_on=True
+after_connected=True
+send_error=
+===== shifted =====
+variant=shifted
+login_result=1
+gc_started=False
+after_logged_on=True
+after_connected=True
+send_error=
+===== type1_or_app =====
+variant=type1_or_app
+login_result=1
+gc_started=False
+after_logged_on=True
+after_connected=True
+send_error=
+===== type2_or_app =====
+variant=type2_or_app
+login_result=1
+gc_started=False
+after_logged_on=True
+after_connected=True
+send_error=
+===== multi_type1_and_app =====
+variant=multi_type1_and_app
+login_result=1
+gc_started=False
+after_logged_on=True
+after_connected=True
+send_error=
