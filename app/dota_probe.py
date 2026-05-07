@@ -1,5 +1,5 @@
 import inspect
-import pkg_resources
+from importlib import metadata
 from typing import Any
 
 
@@ -18,14 +18,18 @@ def _source(obj: Any, limit: int = 8000) -> str:
         return f'{type(exc).__name__}: {exc}'
 
 
-def collect_dota_probe(real_adapter: Any) -> dict:
-    out: dict[str, Any] = {}
+def _package_version(package: str) -> str:
+    try:
+        return metadata.version(package)
+    except Exception as exc:
+        return f'{type(exc).__name__}: {exc}'
 
-    for package in ('steam', 'dota2'):
-        try:
-            out[f'{package}_version'] = pkg_resources.get_distribution(package).version
-        except Exception as exc:
-            out[f'{package}_version_error'] = f'{type(exc).__name__}: {exc}'
+
+def collect_dota_probe(real_adapter: Any) -> dict:
+    out: dict[str, Any] = {
+        'steam_version': _package_version('steam'),
+        'dota2_version': _package_version('dota2'),
+    }
 
     try:
         import dota2.client as dota_client
