@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 
 from .config import settings
 from .dota_lobby_diagnostics import patch_real_dota_adapter_create_lobby
+from .dota_probe import collect_dota_probe
 from .dota_real_adapter import real_dota_adapter
 from .schemas import InviteResult, LobbyMember, LobbyState
 
@@ -20,6 +21,17 @@ class DotaAdapter:
             'mock_mode': True,
             'real_adapter_ready': False,
             'message': 'Dota adapter is in mock mode.',
+            'config': real_dota_adapter.config_status(),
+        }
+
+    async def diagnostics(self) -> dict:
+        if not settings.dota_mock_mode:
+            return await real_dota_adapter._run_sync(collect_dota_probe, real_dota_adapter)
+
+        return {
+            'ok': True,
+            'mode': 'mock',
+            'message': 'Dota diagnostics are only useful when DOTA_MOCK_MODE=false.',
             'config': real_dota_adapter.config_status(),
         }
 
