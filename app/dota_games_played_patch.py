@@ -1,5 +1,7 @@
 def patch_skip_prelaunch_games_played() -> None:
     from steam.client import SteamClient
+    from steam.core.msg import MsgProto
+    from steam.enums.emsg import EMsg
 
     from .dota_real_adapter import RealDotaAdapter
 
@@ -75,6 +77,15 @@ def patch_skip_prelaunch_games_played() -> None:
                 except Exception:
                     pass
 
+        def send_shifted_dota_presence(steam_client):
+            shifted_game_id = 570 << 24
+            steam_client.current_games_played = [570]
+            result = steam_client.send(MsgProto(EMsg.ClientGamesPlayed), {
+                'games_played': [{'game_id': shifted_game_id}],
+            })
+            print('STEAM_GAMES_PLAYED_SHIFTED_570_SENT', shifted_game_id, result, flush=True)
+            return result
+
         def games_played_guard(steam_client, games):
             attach_steam_debug_listeners(steam_client)
             call_count['count'] += 1
@@ -90,8 +101,7 @@ def patch_skip_prelaunch_games_played() -> None:
             )
             if list(games or []) == [570]:
                 ensure_dota_free_license(steam_client)
-                print('STEAM_GAMES_PLAYED_BLOCK_ALL_570_TO_TEST_DISCONNECT', flush=True)
-                return None
+                return send_shifted_dota_presence(steam_client)
             return original_games_played(steam_client, games)
 
         SteamClient.games_played = games_played_guard
