@@ -1,5 +1,6 @@
 import inspect
-from importlib import metadata
+import pkgutil
+from importlib import import_module, metadata
 from typing import Any
 
 
@@ -42,6 +43,31 @@ def _proto_fields(proto: Any) -> list[dict]:
         return [{'error': f'{type(exc).__name__}: {exc}'}]
 
 
+def _find_proto_classes(names: tuple[str, ...]) -> dict[str, Any]:
+    found: dict[str, Any] = {}
+    try:
+        import dota2.protobufs as protobufs_pkg
+        modules = [name for _, name, _ in pkgutil.iter_modules(protobufs_pkg.__path__)]
+    except Exception as exc:
+        return {'error': f'{type(exc).__name__}: {exc}'}
+
+    for module_name in modules:
+        if not module_name.endswith('_pb2'):
+            continue
+        try:
+            module = import_module(f'dota2.protobufs.{module_name}')
+        except Exception:
+            continue
+        for class_name in names:
+            proto = getattr(module, class_name, None)
+            if proto is not None:
+                found[class_name] = {
+                    'module': module_name,
+                    'fields': _proto_fields(proto),
+                }
+    return found
+
+
 def collect_dota_probe(real_adapter: Any) -> dict:
     out: dict[str, Any] = {
         'steam_version': _package_version('steam'),
@@ -53,8 +79,6 @@ def collect_dota_probe(real_adapter: Any) -> dict:
         import dota2.features.lobby as lobby_feature
         import dota2.features.sharedobjects as so_feature
         from dota2.enums import EDOTAGCMsg, ESOType
-        from dota2.protobufs import dota_gcmessages_client_pb2 as gc_client
-        from dota2.protobufs import dota_gcmessages_common_match_management_pb2 as gc_cmm
 
         out['dota2_client_file'] = getattr(dota_client, '__file__', None)
         out['lobby_feature_file'] = getattr(lobby_feature, '__file__', None)
@@ -78,15 +102,16 @@ def collect_dota_probe(real_adapter: Any) -> dict:
             getattr(lobby_feature.Lobby, 'create_tournament_lobby', None)
         )
         out['SharedObjects_source_head'] = _source(so_feature, limit=12000)
-        for name in (
+        out['found_practice_lobby_proto_classes'] = _find_proto_classes((
             'CMsgPracticeLobbyCreate',
             'CMsgPracticeLobbySetDetails',
             'CMsgPracticeLobbyResponse',
             'CMsgPracticeLobbyList',
             'CMsgPracticeLobbyListResponse',
-        ):
-            proto = getattr(gc_cmm, name, None) or getattr(gc_client, name, None)
-            out[f'proto_fields_{name}'] = _proto_fields(proto) if proto else 'not_found'
+            'CMsgPracticeLobbyJoin',
+            'CMsgPracticeLobbyJoinResponse',
+            'CSODOTALobby',
+        ))
     except Exception as exc:
         out['import_error'] = f'{type(exc).__name__}: {exc}'
 
