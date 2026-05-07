@@ -20,6 +20,73 @@ def patch_real_dota_ready_check() -> None:
             flush=True,
         )
 
+    def _wait_steam_reconnect(self, seconds: int = 15) -> bool:
+        deadline = time.monotonic() + seconds
+        while time.monotonic() < deadline:
+            if bool(getattr(self._client, 'logged_on', False)) and getattr(self._client, 'steam_id', 0):
+                return True
+            try:
+                self._client.wait_event('logged_on', timeout=2, raises=False)
+            except TypeError:
+                try:
+                    self._client.wait_event('logged_on', timeout=2)
+                except Exception:
+                    pass
+            except Exception:
+                pass
+            try:
+                self._client.sleep(0.2)
+            except Exception:
+                try:
+                    import gevent
+                    gevent.sleep(0.2)
+                except Exception:
+                    time.sleep(0.2)
+        return bool(getattr(self._client, 'logged_on', False)) and bool(getattr(self._client, 'steam_id', 0))
+
+    def _try_steam_recover(self) -> bool:
+        print(
+            'STEAM_RECOVER_START',
+            'logged_on', getattr(self._client, 'logged_on', None),
+            'steam_id', getattr(self._client, 'steam_id', None),
+            'connected', getattr(self._client, 'connected', None),
+            flush=True,
+        )
+
+        for method_name in ('reconnect', 'relogin'):
+            method = getattr(self._client, method_name, None)
+            if not callable(method):
+                continue
+            try:
+                result = method()
+                print('STEAM_RECOVER_CALL', method_name, result, flush=True)
+            except Exception as exc:
+                print('STEAM_RECOVER_ERROR', method_name, type(exc).__name__, exc, flush=True)
+                continue
+
+            if _wait_steam_reconnect(self, seconds=15):
+                try:
+                    self._client.games_played([570])
+                except Exception as exc:
+                    print('STEAM_RECOVER_GAMES_PLAYED_ERROR', type(exc).__name__, exc, flush=True)
+                print(
+                    'STEAM_RECOVER_OK', method_name,
+                    'logged_on', getattr(self._client, 'logged_on', None),
+                    'steam_id', getattr(self._client, 'steam_id', None),
+                    'games', getattr(self._client, 'current_games_played', None),
+                    flush=True,
+                )
+                return True
+
+        print(
+            'STEAM_RECOVER_FAILED',
+            'logged_on', getattr(self._client, 'logged_on', None),
+            'steam_id', getattr(self._client, 'steam_id', None),
+            'connected', getattr(self._client, 'connected', None),
+            flush=True,
+        )
+        return False
+
     def _launch_gc_sync(self) -> None:
         self.gc_started = False
         self.last_gc_result = None
@@ -41,10 +108,11 @@ def patch_real_dota_ready_check() -> None:
             print('DOTA_GC_LAUNCH_ERROR', self.last_gc_error, flush=True)
             return
 
-        deadline = time.monotonic() + 45
+        deadline = time.monotonic() + 60
         ready_event_result = None
         ready_event_error = None
         hello_count = 0
+        recover_count = 0
 
         while time.monotonic() < deadline:
             if bool(getattr(self._dota, 'ready', False)):
@@ -52,8 +120,10 @@ def patch_real_dota_ready_check() -> None:
 
             steam_logged_on_now = bool(getattr(self._client, 'logged_on', False)) if self._client else False
             if not steam_logged_on_now:
-                ready_event_error = 'steam_disconnected_before_dota_ready'
-                break
+                recover_count += 1
+                if recover_count > 2 or not _try_steam_recover(self):
+                    ready_event_error = 'steam_disconnected_before_dota_ready'
+                    break
 
             try:
                 _manual_gc_hello(self)
@@ -81,7 +151,7 @@ def patch_real_dota_ready_check() -> None:
         self.gc_started = dota_ready and steam_logged_on
         self.last_gc_result = (
             f'launch: {result}; ready_event: {ready_event_result}; '
-            f'hello_count: {hello_count}; '
+            f'hello_count: {hello_count}; recover_count: {recover_count}; '
             f'dota_ready: {dota_ready}; steam_logged_on: {steam_logged_on}; '
             f'connection_status: {connection_status}'
         )
