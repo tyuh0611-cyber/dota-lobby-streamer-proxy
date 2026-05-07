@@ -1,9 +1,11 @@
 import asyncio
 import base64
+import functools
 import hashlib
 import hmac
 import importlib.util
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any
 
@@ -45,6 +47,19 @@ class RealDotaAdapter:
         self.last_create_lobby_error: str | None = None
         self._client: Any | None = None
         self._dota: Any | None = None
+        self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix='dota-gevent')
+
+    async def _run_sync(self, func, *args):
+        """Run every Steam/Dota operation on one persistent thread.
+
+        The steam/dota2 libraries use gevent internally. Creating the GC session on
+        one arbitrary asyncio worker and later sending lobby/invite messages from
+        another worker can leave SOCache event processing on the wrong gevent hub.
+        A single long-lived executor keeps SteamClient, Dota2Client, gevent waits,
+        and SOCache updates on the same OS thread.
+        """
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(self._executor, functools.partial(func, *args))
 
     def dependency_status(self) -> DotaDependencyStatus:
         return DotaDependencyStatus(
@@ -92,6 +107,7 @@ class RealDotaAdapter:
             'last_create_lobby_result': self.last_create_lobby_result,
             'last_create_lobby_error': self.last_create_lobby_error,
             'lobby_detected': self._dota.lobby is not None if self._dota else False,
+            'dota_worker': 'single_thread_gevent_executor',
             'dota_methods': self._public_methods(self._dota),
             'steam_methods': self._public_methods(self._client),
         }
@@ -151,7 +167,7 @@ class RealDotaAdapter:
             )
 
         try:
-            result = await asyncio.to_thread(self._connect_sync, steam_guard_code)
+            result = await self._run_sync(self._connect_sync, steam_guard_code)
         except Exception as exc:
             self.connected = False
             self.gc_started = False
@@ -264,7 +280,7 @@ class RealDotaAdapter:
         }
 
         try:
-            result = await asyncio.to_thread(self._create_lobby_sync, password or '', options)
+            result = await self._run_sync(self._create_lobby_sync, password or '', options)
             self.last_create_lobby_result = str(result)
             self.last_create_lobby_error = None
             print('DOTA_CREATE_LOBBY_OK', self.last_create_lobby_result, flush=True)
@@ -292,25 +308,56 @@ class RealDotaAdapter:
         result = self._dota.create_practice_lobby(password, options)
 
         events = []
-        for event_name in ('lobby_new', 'lobby_changed'):
-            try:
-                event_result = self._dota.wait_event(event_name, timeout=20)
-                events.append({event_name: str(event_result)})
-            except Exception as exc:
-                events.append({event_name: f'{type(exc).__name__}: {exc}'})
+        deadline = time.monotonic() + 35
 
-            if getattr(self._dota, 'lobby', None) is not None:
+        while time.monotonic() < deadline:
+            lobby = getattr(self._dota, 'lobby', None)
+            if lobby is not None:
                 break
+
+            for event_name in ('lobby_new', 'lobby_changed'):
+                if getattr(self._dota, 'lobby', None) is not None:
+                    break
+
+                try:
+                    event_result = self._dota.wait_event(event_name, timeout=2, raises=False)
+                    events.append({event_name: str(event_result)})
+                except TypeError:
+                    event_result = self._dota.wait_event(event_name, timeout=2)
+                    events.append({event_name: str(event_result)})
+                except Exception as exc:
+                    events.append({event_name: f'{type(exc).__name__}: {exc}'})
+
+            self._idle_dota_sync(0.25)
 
         lobby = getattr(self._dota, 'lobby', None)
 
         return {
             'create_result': str(result),
-            'events': events,
+            'events': events[-12:],
             'lobby_detected': lobby is not None,
             'lobby_id': str(getattr(lobby, 'lobby_id', '')) if lobby else None,
             'leader_id': str(getattr(lobby, 'leader_id', '')) if lobby else None,
         }
+
+    def _idle_dota_sync(self, seconds: float = 0.25) -> None:
+        """Give gevent-backed Steam/Dota greenlets a chance to process inbound GC messages."""
+        if not self._dota:
+            return
+
+        try:
+            sleep = getattr(self._dota, 'sleep', None)
+            if callable(sleep):
+                sleep(seconds)
+                return
+        except Exception:
+            pass
+
+        try:
+            import gevent
+            gevent.sleep(seconds)
+        except Exception:
+            time.sleep(seconds)
 
     async def get_lobby(self) -> LobbyState:
         if not self.connected:
@@ -319,6 +366,7 @@ class RealDotaAdapter:
                 detail={'error': 'steam_not_connected', 'message': 'Call /dota/connect first.'},
             )
 
+        await self._run_sync(self._idle_dota_sync, 0.1)
         lobby_payload = self._read_lobby_payload()
 
         if lobby_payload is None:
@@ -364,7 +412,7 @@ class RealDotaAdapter:
 
             for id_kind, id_value in variants:
                 try:
-                    result = await asyncio.to_thread(method, id_value)
+                    result = await self._run_sync(method, id_value)
                     attempts.append({
                         'method': method_name,
                         'id_kind': id_kind,
