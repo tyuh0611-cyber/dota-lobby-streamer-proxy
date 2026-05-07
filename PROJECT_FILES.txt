@@ -1,5 +1,7 @@
 ./app/config.py
 ./app/dota_adapter.py
+./app/dota_lobby_diagnostics.py
+./app/dota_real_adapter.py
 ./app/env_writer.py
 ./app/main.py
 ./app/public_url.py
