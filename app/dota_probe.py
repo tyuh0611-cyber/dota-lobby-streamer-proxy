@@ -25,6 +25,23 @@ def _package_version(package: str) -> str:
         return f'{type(exc).__name__}: {exc}'
 
 
+def _proto_fields(proto: Any) -> list[dict]:
+    try:
+        return [
+            {
+                'name': field.name,
+                'type': field.type,
+                'label': field.label,
+                'message_type': field.message_type.full_name if field.message_type else None,
+                'enum_type': field.enum_type.full_name if field.enum_type else None,
+                'default': str(field.default_value),
+            }
+            for field in proto.DESCRIPTOR.fields
+        ]
+    except Exception as exc:
+        return [{'error': f'{type(exc).__name__}: {exc}'}]
+
+
 def collect_dota_probe(real_adapter: Any) -> dict:
     out: dict[str, Any] = {
         'steam_version': _package_version('steam'),
@@ -35,7 +52,9 @@ def collect_dota_probe(real_adapter: Any) -> dict:
         import dota2.client as dota_client
         import dota2.features.lobby as lobby_feature
         import dota2.features.sharedobjects as so_feature
-        from dota2.enums import EDOTAGCMsg
+        from dota2.enums import EDOTAGCMsg, ESOType
+        from dota2.protobufs import dota_gcmessages_client_pb2 as gc_client
+        from dota2.protobufs import dota_gcmessages_common_match_management_pb2 as gc_cmm
 
         out['dota2_client_file'] = getattr(dota_client, '__file__', None)
         out['lobby_feature_file'] = getattr(lobby_feature, '__file__', None)
@@ -45,11 +64,29 @@ def collect_dota_probe(real_adapter: Any) -> dict:
             for name, value in EDOTAGCMsg.__members__.items()
             if 'PracticeLobby' in name or 'Lobby' in name
         }
+        out['eso_lobby_values'] = {
+            name: int(value)
+            for name, value in ESOType.__members__.items()
+            if 'Lobby' in name or 'Party' in name or 'DOTAGameAccount' in name
+        }
         out['Dota2Client_launch_source'] = _source(getattr(dota_client.Dota2Client, 'launch', None))
+        out['Dota2Client_knock_source'] = _source(getattr(dota_client.Dota2Client, '_knock_on_gc', None))
+        out['Dota2Client_send_source'] = _source(getattr(dota_client.Dota2Client, 'send', None))
+        out['Dota2Client_send_job_source'] = _source(getattr(dota_client.Dota2Client, 'send_job', None))
+        out['Lobby_source_head'] = _source(lobby_feature, limit=20000)
         out['Lobby_create_tournament_lobby_source'] = _source(
             getattr(lobby_feature.Lobby, 'create_tournament_lobby', None)
         )
         out['SharedObjects_source_head'] = _source(so_feature, limit=12000)
+        for name in (
+            'CMsgPracticeLobbyCreate',
+            'CMsgPracticeLobbySetDetails',
+            'CMsgPracticeLobbyResponse',
+            'CMsgPracticeLobbyList',
+            'CMsgPracticeLobbyListResponse',
+        ):
+            proto = getattr(gc_cmm, name, None) or getattr(gc_client, name, None)
+            out[f'proto_fields_{name}'] = _proto_fields(proto) if proto else 'not_found'
     except Exception as exc:
         out['import_error'] = f'{type(exc).__name__}: {exc}'
 
@@ -85,6 +122,7 @@ def collect_dota_probe(real_adapter: Any) -> dict:
             'type': type(socache).__name__ if socache is not None else None,
             'repr': _safe_text(socache, 1000),
             'dir': [name for name in dir(socache) if not name.startswith('__')][:120] if socache is not None else [],
+            'keys': [_safe_text(key, 200) for key in list(socache.keys())] if socache is not None else [],
         }
 
     return out
