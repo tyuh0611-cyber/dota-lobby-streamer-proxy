@@ -20,6 +20,18 @@ def patch_wait_for_dota_ready_only() -> None:
             print('DOTA_GC_LAUNCH_ERROR', self.last_gc_error, flush=True)
             return
 
+        knock_started = False
+        if not bool(getattr(self._dota, 'ready', False)):
+            knock = getattr(self._dota, '_knock_on_gc', None)
+            if callable(knock):
+                try:
+                    import gevent
+                    self._dota._retry_welcome_loop = gevent.spawn(knock)
+                    knock_started = True
+                    print('DOTA_GC_KNOCK_LOOP_FORCED', flush=True)
+                except Exception as exc:
+                    print('DOTA_GC_KNOCK_LOOP_FORCE_ERROR', type(exc).__name__, exc, flush=True)
+
         ready_event_result = None
         ready_error = None
         ticks = 0
@@ -46,6 +58,7 @@ def patch_wait_for_dota_ready_only() -> None:
             print(
                 'DOTA_GC_WAIT_ONLY_TICK', ticks,
                 'event', ready_event_result,
+                'knock_started', knock_started,
                 'steam_logged_on', getattr(self._client, 'logged_on', None),
                 'steam_id', getattr(self._client, 'steam_id', None),
                 'dota_ready', getattr(self._dota, 'ready', None),
@@ -61,6 +74,7 @@ def patch_wait_for_dota_ready_only() -> None:
         self.gc_started = dota_ready and steam_logged_on
         self.last_gc_result = (
             f'launch: {result}; ready_event: {ready_event_result}; ticks: {ticks}; '
+            f'knock_started: {knock_started}; '
             f'dota_ready: {dota_ready}; steam_logged_on: {steam_logged_on}; '
             f'connection_status: {connection_status}'
         )
