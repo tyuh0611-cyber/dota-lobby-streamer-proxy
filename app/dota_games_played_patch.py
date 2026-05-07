@@ -48,10 +48,23 @@ def patch_skip_prelaunch_games_played() -> None:
                 except Exception as exc:
                     print('STEAM_EVENT_ATTACH_ERROR', event_name, type(exc).__name__, exc, flush=True)
 
+        def steam_is_logged_on(steam_client):
+            return bool(getattr(steam_client, 'logged_on', False)) and bool(getattr(steam_client, 'steam_id', 0))
+
         def ensure_dota_free_license(steam_client):
             if license_requested['done']:
                 return
             license_requested['done'] = True
+
+            if not steam_is_logged_on(steam_client):
+                print(
+                    'STEAM_DOTA_LICENSE_SKIP_NOT_LOGGED_ON',
+                    'logged_on', getattr(steam_client, 'logged_on', None),
+                    'steam_id', getattr(steam_client, 'steam_id', None),
+                    'connected', getattr(steam_client, 'connected', None),
+                    flush=True,
+                )
+                return
 
             method = getattr(steam_client, 'request_free_license', None)
             if not callable(method):
@@ -90,6 +103,16 @@ def patch_skip_prelaunch_games_played() -> None:
             return 'type1_or_app', (1 << 24) | 570
 
         def send_dota_presence(steam_client):
+            if not steam_is_logged_on(steam_client):
+                print(
+                    'STEAM_GAMES_PLAYED_SKIP_NOT_LOGGED_ON',
+                    'logged_on', getattr(steam_client, 'logged_on', None),
+                    'steam_id', getattr(steam_client, 'steam_id', None),
+                    'connected', getattr(steam_client, 'connected', None),
+                    flush=True,
+                )
+                return None
+
             variant, game_id = selected_game_id()
             steam_client.current_games_played = [570]
             result = steam_client.send(MsgProto(EMsg.ClientGamesPlayed), {
