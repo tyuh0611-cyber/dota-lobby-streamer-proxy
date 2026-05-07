@@ -66,6 +66,16 @@ def run_presence_probe(real_adapter: Any, selected_variant: str | None = None) -
             'games_played': [{'game_id': 570 << 24}],
         })
 
+    def proto_gameid_type1_or_app():
+        return client.send(MsgProto(EMsg.ClientGamesPlayed), {
+            'games_played': [{'game_id': (1 << 24) | 570}],
+        })
+
+    def proto_gameid_type2_or_app():
+        return client.send(MsgProto(EMsg.ClientGamesPlayed), {
+            'games_played': [{'game_id': (2 << 24) | 570}],
+        })
+
     def proto_with_extra_info():
         return client.send(MsgProto(EMsg.ClientGamesPlayed), {
             'games_played': [{'game_id': 570, 'game_extra_info': 'Dota 2'}],
@@ -84,6 +94,8 @@ def run_presence_probe(real_adapter: Any, selected_variant: str | None = None) -
     variants = {
         'standard': proto_570,
         'shifted': proto_gameid_shifted,
+        'type1_or_app': proto_gameid_type1_or_app,
+        'type2_or_app': proto_gameid_type2_or_app,
         'extra_info': proto_with_extra_info,
         'no_data_blob': no_data_blob_570,
         'with_data_blob_empty': with_data_blob_empty,
