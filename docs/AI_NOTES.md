@@ -32,7 +32,7 @@ tyuh0611-cyber/dota-twitch-lobby-bot
 - Twitch chatters endpoint
 - Dota lobby status endpoint
 - Dota invite endpoint
-- future real Steam/Dota Game Coordinator adapter
+- real Steam/Dota Game Coordinator adapter
 
 ## Not streamer proxy responsibilities
 
@@ -48,6 +48,51 @@ tyuh0611-cyber/dota-twitch-lobby-bot
 - OAuth should later resolve and store numeric Twitch IDs automatically.
 - `PUBLIC_BASE_URL` exists to avoid Twitch redirect mismatch with localhost.
 - Real secrets stay in local `.env`; examples and docs only go to Git.
+
+## Dota/Steam notes as of 2026-05-07
+
+The current real Dota blocker is lobby shared-object detection, not Steam login.
+
+Already verified before 2026-05-07:
+
+- Steam login works.
+- Steam Guard one-time code works.
+- `Dota2Client.launch()` works.
+- `wait_event('ready')` works.
+- `/dota/status` can show `connected=true`, `gc_started=true`, `real_adapter_ready=true`.
+- `/dota/create-lobby` exists.
+- `create_practice_lobby()` sends a message but previously did not produce `lobby_new` / `lobby_changed`.
+- `invite_to_lobby()` silently returns if `self._dota.lobby is None`, so invite testing must wait until `lobby_detected=true`.
+
+Important patch pushed on 2026-05-07:
+
+```text
+4c73b102bb05bf420fb6e6989f95c09e0c231c9c Keep Dota GC operations on one gevent worker
+```
+
+Reason:
+
+The `steam`/`dota2` libraries use gevent internally. The old implementation used separate `asyncio.to_thread(...)` calls, so Steam login / Dota launch / lobby creation / invite could run on different worker threads and different gevent hubs. That can prevent SOCache updates from being observed reliably.
+
+Current implementation uses one persistent `ThreadPoolExecutor(max_workers=1, thread_name_prefix='dota-gevent')` and routes all real Steam/Dota operations through `_run_sync(...)`.
+
+Deployment verification:
+
+```bash
+curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/status
+```
+
+Expected flag after deploy:
+
+```text
+"dota_worker":"single_thread_gevent_executor"
+```
+
+Only test `/dota/invite` after `/dota/status` or `/dota/create-lobby` shows:
+
+```text
+lobby_detected=true
+```
 
 ## Current known issue/focus
 
