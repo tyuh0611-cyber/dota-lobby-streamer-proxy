@@ -44,9 +44,9 @@ class DotaAdapter:
             'config': real_dota_adapter.config_status(),
         }
 
-    async def presence_probe(self) -> dict:
+    async def presence_probe(self, variant: str | None = None) -> dict:
         if not settings.dota_mock_mode:
-            return await real_dota_adapter._run_sync(run_presence_probe, real_dota_adapter)
+            return await real_dota_adapter._run_sync(run_presence_probe, real_dota_adapter, variant)
 
         return {
             'ok': True,
