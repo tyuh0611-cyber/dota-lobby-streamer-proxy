@@ -8,6 +8,7 @@ def patch_skip_prelaunch_games_played() -> None:
 
     def _connect_sync(self, *args, **kwargs):
         call_count = {'count': 0}
+        license_requested = {'done': False}
         listeners_attached = {'done': False}
 
         def attach_steam_debug_listeners(steam_client):
@@ -43,6 +44,37 @@ def patch_skip_prelaunch_games_played() -> None:
                 except Exception as exc:
                     print('STEAM_EVENT_ATTACH_ERROR', event_name, type(exc).__name__, exc, flush=True)
 
+        def ensure_dota_free_license(steam_client):
+            if license_requested['done']:
+                return
+            license_requested['done'] = True
+
+            method = getattr(steam_client, 'request_free_license', None)
+            if not callable(method):
+                print('STEAM_DOTA_LICENSE_SKIP no_request_free_license_method', flush=True)
+                return
+
+            try:
+                result = method([570])
+                print('STEAM_DOTA_LICENSE_REQUEST', result, flush=True)
+            except TypeError:
+                try:
+                    result = method(570)
+                    print('STEAM_DOTA_LICENSE_REQUEST', result, flush=True)
+                except Exception as exc:
+                    print('STEAM_DOTA_LICENSE_ERROR', type(exc).__name__, exc, flush=True)
+            except Exception as exc:
+                print('STEAM_DOTA_LICENSE_ERROR', type(exc).__name__, exc, flush=True)
+
+            try:
+                steam_client.sleep(1.0)
+            except Exception:
+                try:
+                    import gevent
+                    gevent.sleep(1.0)
+                except Exception:
+                    pass
+
         def games_played_guard(steam_client, games):
             attach_steam_debug_listeners(steam_client)
             call_count['count'] += 1
@@ -56,6 +88,8 @@ def patch_skip_prelaunch_games_played() -> None:
                 'connected', getattr(steam_client, 'connected', None),
                 flush=True,
             )
+            if list(games or []) == [570]:
+                ensure_dota_free_license(steam_client)
             if call_count['count'] > 1 and list(games or []) == [570]:
                 print('STEAM_GAMES_PLAYED_SKIP_DUPLICATE_570', flush=True)
                 return None
