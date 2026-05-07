@@ -4,6 +4,7 @@ from .config import settings
 from .dota_games_played_patch import patch_skip_prelaunch_games_played
 from .dota_lobby_diagnostics import patch_real_dota_adapter_create_lobby
 from .dota_no_games_patch import patch_disable_games_played_570
+from .dota_presence_probe import run_presence_probe
 from .dota_probe import collect_dota_probe
 from .dota_ready_patch import patch_real_dota_ready_check
 from .dota_real_adapter import real_dota_adapter
@@ -41,6 +42,16 @@ class DotaAdapter:
             'mode': 'mock',
             'message': 'Dota diagnostics are only useful when DOTA_MOCK_MODE=false.',
             'config': real_dota_adapter.config_status(),
+        }
+
+    async def presence_probe(self) -> dict:
+        if not settings.dota_mock_mode:
+            return await real_dota_adapter._run_sync(run_presence_probe, real_dota_adapter)
+
+        return {
+            'ok': True,
+            'mode': 'mock',
+            'message': 'Dota presence probe is only useful when DOTA_MOCK_MODE=false.',
         }
 
     async def connect(self, steam_guard_code: str | None = None) -> dict:
