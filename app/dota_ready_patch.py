@@ -2,7 +2,23 @@ import time
 
 
 def patch_real_dota_ready_check() -> None:
+    from dota2.enums import EGCBaseClientMsg, EDOTAGCSessionNeed, ESourceEngine
+
     from .dota_real_adapter import RealDotaAdapter
+
+    def _manual_gc_hello(self) -> None:
+        self._dota.send(EGCBaseClientMsg.EMsgGCClientHello, {
+            'client_session_need': EDOTAGCSessionNeed.UserInUINeverConnected,
+            'engine': ESourceEngine.ESE_Source2,
+        })
+        print(
+            'DOTA_GC_CLIENT_HELLO_SENT',
+            'steam_logged_on', getattr(self._client, 'logged_on', None),
+            'steam_id', getattr(self._client, 'steam_id', None),
+            'dota_ready', getattr(self._dota, 'ready', None),
+            'connection_status', getattr(self._dota, 'connection_status', None),
+            flush=True,
+        )
 
     def _launch_gc_sync(self) -> None:
         self.gc_started = False
@@ -25,19 +41,32 @@ def patch_real_dota_ready_check() -> None:
             print('DOTA_GC_LAUNCH_ERROR', self.last_gc_error, flush=True)
             return
 
-        deadline = time.monotonic() + 35
+        deadline = time.monotonic() + 45
         ready_event_result = None
         ready_event_error = None
+        hello_count = 0
 
         while time.monotonic() < deadline:
             if bool(getattr(self._dota, 'ready', False)):
                 break
 
+            steam_logged_on_now = bool(getattr(self._client, 'logged_on', False)) if self._client else False
+            if not steam_logged_on_now:
+                ready_event_error = 'steam_disconnected_before_dota_ready'
+                break
+
             try:
-                ready_event_result = self._dota.wait_event('ready', timeout=3, raises=False)
+                _manual_gc_hello(self)
+                hello_count += 1
+            except Exception as exc:
+                ready_event_error = f'gc_hello: {type(exc).__name__}: {exc}'
+                print('DOTA_GC_CLIENT_HELLO_ERROR', ready_event_error, flush=True)
+
+            try:
+                ready_event_result = self._dota.wait_event('ready', timeout=5, raises=False)
             except TypeError:
                 try:
-                    ready_event_result = self._dota.wait_event('ready', timeout=3)
+                    ready_event_result = self._dota.wait_event('ready', timeout=5)
                 except Exception as exc:
                     ready_event_error = f'{type(exc).__name__}: {exc}'
             except Exception as exc:
@@ -52,6 +81,7 @@ def patch_real_dota_ready_check() -> None:
         self.gc_started = dota_ready and steam_logged_on
         self.last_gc_result = (
             f'launch: {result}; ready_event: {ready_event_result}; '
+            f'hello_count: {hello_count}; '
             f'dota_ready: {dota_ready}; steam_logged_on: {steam_logged_on}; '
             f'connection_status: {connection_status}'
         )
