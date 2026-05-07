@@ -53,6 +53,11 @@ async def dota_status() -> dict:
     return await dota_adapter.get_status()
 
 
+@app.get('/dota/diagnostics', dependencies=[Depends(require_proxy_key)])
+async def dota_diagnostics() -> dict:
+    return await dota_adapter.diagnostics()
+
+
 @app.post('/dota/connect', dependencies=[Depends(require_proxy_key)])
 async def dota_connect(payload: DotaConnectRequest | None = None) -> dict:
     return await dota_adapter.connect(payload.steam_guard_code if payload else None)
