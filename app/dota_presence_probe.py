@@ -15,7 +15,7 @@ def _wait_tick(client: Any, seconds: float = 2.0) -> None:
         time.sleep(seconds)
 
 
-def run_presence_probe(real_adapter: Any) -> dict:
+def run_presence_probe(real_adapter: Any, selected_variant: str | None = None) -> dict:
     client = getattr(real_adapter, '_client', None)
     if client is None:
         return {'ok': False, 'error': 'steam_client_not_initialized'}
@@ -38,25 +38,8 @@ def run_presence_probe(real_adapter: Any) -> dict:
             'games': str(getattr(client, 'current_games_played', None)),
         }
 
-    def try_recover() -> dict:
-        out = {'attempted': False}
-        if bool(getattr(client, 'logged_on', False)):
-            return out
-        reconnect = getattr(client, 'reconnect', None)
-        if callable(reconnect):
-            out['attempted'] = True
-            try:
-                out['reconnect_result'] = str(reconnect())
-            except Exception as exc:
-                out['reconnect_error'] = f'{type(exc).__name__}: {exc}'
-            _wait_tick(client, 3)
-        out.update(snapshot('after_recover'))
-        return out
-
     def run_variant(name: str, fn) -> None:
         entry = {'variant': name, 'before': snapshot('before')}
-        if not bool(getattr(client, 'logged_on', False)):
-            entry['recover_before'] = try_recover()
         try:
             send_result = fn()
             entry['send_result'] = str(send_result)
@@ -89,18 +72,40 @@ def run_presence_probe(real_adapter: Any) -> dict:
             'games_played': [{'game_id': 570}],
         })
 
-    for variant, fn in (
-        ('ClientGamesPlayed_570', proto_570),
-        ('ClientGamesPlayed_gameid_shifted_570_24', proto_gameid_shifted),
-        ('ClientGamesPlayed_570_extra_info', proto_with_extra_info),
-        ('ClientGamesPlayedNoDataBlob_570', no_data_blob_570),
-    ):
-        run_variant(variant, fn)
-        if not bool(getattr(client, 'logged_on', False)):
-            break
+    def with_data_blob_empty():
+        return client.send(MsgProto(EMsg.ClientGamesPlayedWithDataBlob), {
+            'games_played': [{'game_id': 570}],
+        })
+
+    variants = {
+        'standard': proto_570,
+        'shifted': proto_gameid_shifted,
+        'extra_info': proto_with_extra_info,
+        'no_data_blob': no_data_blob_570,
+        'with_data_blob_empty': with_data_blob_empty,
+    }
+
+    if selected_variant:
+        fn = variants.get(selected_variant)
+        if not fn:
+            return {
+                'ok': False,
+                'error': 'unknown_variant',
+                'selected_variant': selected_variant,
+                'available_variants': list(variants.keys()),
+                'before': before,
+            }
+        run_variant(selected_variant, fn)
+    else:
+        for variant, fn in variants.items():
+            run_variant(variant, fn)
+            if not bool(getattr(client, 'logged_on', False)):
+                break
 
     return {
         'ok': True,
+        'selected_variant': selected_variant,
+        'available_variants': list(variants.keys()),
         'before': before,
         'results': results,
         'final': snapshot('final'),
