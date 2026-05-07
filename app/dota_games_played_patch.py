@@ -1,4 +1,6 @@
 def patch_skip_prelaunch_games_played() -> None:
+    import os
+
     from steam.client import SteamClient
     from steam.core.msg import MsgProto
     from steam.enums.emsg import EMsg
@@ -77,13 +79,23 @@ def patch_skip_prelaunch_games_played() -> None:
                 except Exception:
                     pass
 
-        def send_shifted_dota_presence(steam_client):
-            shifted_game_id = 570 << 24
+        def selected_game_id() -> tuple[str, int]:
+            variant = os.getenv('DOTA_PRESENCE_VARIANT', 'type1_or_app').strip() or 'type1_or_app'
+            if variant == 'shifted':
+                return variant, 570 << 24
+            if variant == 'type2_or_app':
+                return variant, (2 << 24) | 570
+            if variant == 'standard':
+                return variant, 570
+            return 'type1_or_app', (1 << 24) | 570
+
+        def send_dota_presence(steam_client):
+            variant, game_id = selected_game_id()
             steam_client.current_games_played = [570]
             result = steam_client.send(MsgProto(EMsg.ClientGamesPlayed), {
-                'games_played': [{'game_id': shifted_game_id}],
+                'games_played': [{'game_id': game_id}],
             })
-            print('STEAM_GAMES_PLAYED_SHIFTED_570_SENT', shifted_game_id, result, flush=True)
+            print('STEAM_GAMES_PLAYED_CUSTOM_570_SENT', variant, game_id, result, flush=True)
             return result
 
         def games_played_guard(steam_client, games):
@@ -101,7 +113,7 @@ def patch_skip_prelaunch_games_played() -> None:
             )
             if list(games or []) == [570]:
                 ensure_dota_free_license(steam_client)
-                return send_shifted_dota_presence(steam_client)
+                return send_dota_presence(steam_client)
             return original_games_played(steam_client, games)
 
         SteamClient.games_played = games_played_guard
