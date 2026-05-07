@@ -1,8 +1,11 @@
 from fastapi import HTTPException, status
 
 from .config import settings
+from .dota_lobby_diagnostics import patch_real_dota_adapter_create_lobby
 from .dota_real_adapter import real_dota_adapter
 from .schemas import InviteResult, LobbyMember, LobbyState
+
+patch_real_dota_adapter_create_lobby()
 
 
 class DotaAdapter:
