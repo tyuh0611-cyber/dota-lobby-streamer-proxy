@@ -58,6 +58,11 @@ async def dota_diagnostics() -> dict:
     return await dota_adapter.diagnostics()
 
 
+@app.post('/dota/presence-probe', dependencies=[Depends(require_proxy_key)])
+async def dota_presence_probe() -> dict:
+    return await dota_adapter.presence_probe()
+
+
 @app.post('/dota/connect', dependencies=[Depends(require_proxy_key)])
 async def dota_connect(payload: DotaConnectRequest | None = None) -> dict:
     return await dota_adapter.connect(payload.steam_guard_code if payload else None)
