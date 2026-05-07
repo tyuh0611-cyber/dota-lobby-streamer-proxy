@@ -27,12 +27,36 @@ tyuh0611-cyber/dota-lobby-backend
 
 ## Current service path
 
-Systemd should run from:
+Systemd unit shows:
 
 ```ini
 WorkingDirectory=/opt/dota-lobby-streamer-proxy
 EnvironmentFile=/opt/dota-lobby-streamer-proxy/.env
 ExecStart=/opt/dota-lobby-streamer-proxy/.venv/bin/uvicorn app.main:app --host ${APP_HOST} --port ${APP_PORT}
+```
+
+Important nuance found during debugging:
+
+```text
+/opt/dota-lobby-streamer-proxy/.venv/bin/uvicorn
+```
+
+has shebang pointing to:
+
+```text
+/opt/dota-twitch-lobby-bot/streamer_proxy/.venv/bin/python3
+```
+
+So `dota2` and `steam` packages are installed under:
+
+```text
+/opt/dota-twitch-lobby-bot/streamer_proxy/.venv/lib/python3.13/site-packages
+```
+
+Use this Python for library introspection:
+
+```bash
+REAL_PY="/opt/dota-twitch-lobby-bot/streamer_proxy/.venv/bin/python3"
 ```
 
 ## Twitch status
@@ -58,18 +82,16 @@ Notes:
 
 ## Dota status
 
-Real Steam login, Dota GC launch, and real invite are implemented and verified.
+Real Steam login and Dota GC launch are implemented and verified.
 
-Verified current state:
+Verified:
 
 ```text
 POST /dota/connect -> 200 OK
 /dota/status -> connected=true, gc_started=true, real_adapter_ready=true
 last_login_result="1"
-last_gc_result="launch: None"
+last_gc_result="launch: None; ready: None"
 last_gc_error=null
-POST /dota/invite -> 200 OK
-invite result -> {"ok":true,"message":"invite_to_lobby:None","mode":"real_pending"}
 ```
 
 This means:
@@ -80,30 +102,109 @@ This means:
 - `STEAM_SHARED_SECRET` is optional.
 - One-time Steam Guard code from the official Steam app can be passed in the `/dota/connect` request.
 - `Dota2Client.launch()` succeeds.
-- `Dota2Client.invite_to_lobby()` succeeds for a real Steam ID.
+- `Dota2Client.wait_event('ready')` succeeds.
 
 Implemented streamer endpoints:
 
 ```text
 /dota/status
 /dota/connect
+/dota/create-lobby
 /dota/lobby
 /dota/invite
 ```
 
-Current behavior in `DOTA_MOCK_MODE=true`:
+## Current Dota blocker
 
-- `/dota/status` returns `mode=mock`, `connected=false`, `real_adapter_ready=false`.
-- `/dota/lobby` returns a mock lobby with mock members.
-- `/dota/invite` returns a mock successful invite response.
-- `/dota/connect` returns HTTP 409 because connect is only for real mode.
+Real invite API calls return success at the library-call level, but the target player does not receive an invite.
 
-Current behavior in `DOTA_MOCK_MODE=false`:
+Observed invite attempts:
 
-- `/dota/status` returns `mode=real_pending` with `connected`, `gc_started`, `dota_methods`, and `steam_methods` diagnostics.
-- `/dota/connect` performs Steam login and attempts Dota GC launch.
-- `/dota/lobby` returns current detected lobby state or an empty real-pending lobby state when no lobby is detected yet.
-- `/dota/invite` sends invite through `invite_to_lobby`.
+```text
+DOTA_INVITE_ATTEMPT_OK invite_to_lobby steam_id64 76561198807245109 None
+DOTA_INVITE_ATTEMPT_OK invite_to_lobby account_id32 846979381 None
+DOTA_INVITE_ATTEMPT_OK invite_to_party steam_id64 76561198807245109 job_1
+DOTA_INVITE_ATTEMPT_OK invite_to_party account_id32 846979381 job_2
+```
+
+Important conclusion from library source:
+
+```python
+def invite_to_lobby(self, steam_id):
+    if self.lobby is None:
+        return
+```
+
+So `invite_to_lobby` returning `None` is a false success when `self.lobby is None`.
+
+Current `/dota/lobby` state:
+
+```json
+{"lobby_exists":false,"lobby_id":null,"lobby_name":"Real Dota lobby not detected yet","mode":"real_pending","connected":true,"members":[]}
+```
+
+Current `/dota/create-lobby` result after waiting for `lobby_new` and `lobby_changed`:
+
+```text
+DOTA_CREATE_LOBBY_OK {'create_result': 'None', 'events': [{'lobby_new': 'None'}, {'lobby_changed': 'None'}], 'lobby_detected': False, 'lobby_id': None, 'leader_id': None}
+```
+
+So `create_practice_lobby()` sends the GC message but no `CSODOTALobby` shared object arrives; `self._dota.lobby` stays `None`.
+
+## Dota library findings
+
+Library path:
+
+```text
+/opt/dota-twitch-lobby-bot/streamer_proxy/.venv/lib/python3.13/site-packages/dota2/features/lobby.py
+```
+
+Relevant event constants:
+
+```python
+EVENT_LOBBY_INVITE = 'lobby_invite'
+EVENT_LOBBY_INVITE_REMOVED = 'lobby_invite_removed'
+EVENT_LOBBY_NEW = 'lobby_new'
+EVENT_LOBBY_CHANGED = 'lobby_changed'
+EVENT_LOBBY_REMOVED = 'lobby_removed'
+```
+
+Relevant source findings:
+
+```python
+def create_practice_lobby(self, password="", options=None):
+    return self.create_tournament_lobby(password=password, options=options)
+
+def create_tournament_lobby(self, password="", tournament_game_id=None, tournament_id=0, options=None):
+    options = {} if options is None else options
+    options["pass_key"] = password
+    command = {
+        "lobby_details": options,
+        "pass_key": password
+    }
+    self.send(EDOTAGCMsg.EMsgGCPracticeLobbyCreate, command)
+```
+
+`create_practice_lobby()` is fire-and-forget. Lobby appears only if SOCache receives `ESOType.CSODOTALobby` and emits `lobby_new` / `lobby_changed`.
+
+## Most recent code changes already pushed
+
+Recent streamer commits include:
+
+```text
+cb32ead Try Dota invite with multiple id variants
+e4d70ae Add Dota practice lobby creation endpoint
+308a9c6 Wait for Dota practice lobby creation event
+4277c81 Wait for Dota GC ready before lobby creation
+```
+
+Backend commits include Steam Guard input and Dota status in Control Center:
+
+```text
+13f8b67 Pass Steam Guard code from backend client
+05ab1fa Accept Steam Guard code in backend Dota connect route
+ec54329 Add Steam Guard input and Dota status to dashboard
+```
 
 ## Dota env shape
 
@@ -121,37 +222,69 @@ Real Steam/Dota credentials stay in local `.env` only and must not be committed.
 
 `STEAM_SHARED_SECRET` is optional. For normal streamer onboarding, use a one-time Steam Guard code from the official Steam mobile app when calling `/dota/connect`.
 
-## First checks after deploy
+## Commands for next chat
+
+Check service and current status:
 
 ```bash
 cd /opt/dota-lobby-streamer-proxy
-python3 -m py_compile app/*.py
-systemctl restart streamer-proxy
-sleep 2
-systemctl status streamer-proxy --no-pager
-journalctl -u streamer-proxy -n 80 --no-pager
+KEY=$(grep '^PROXY_API_KEY=' .env | cut -d= -f2-)
+
+curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/status
+echo
+curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/lobby
+journalctl -u streamer-proxy -n 160 --no-pager
 ```
 
-Direct API checks:
+Connect after restart:
 
 ```bash
-KEY=$(grep '^PROXY_API_KEY=' .env | cut -d= -f2-)
-curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/twitch/me
-curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/chatters
-curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/status
-curl -i -X POST -H "X-Api-Key: $KEY" -H "Content-Type: application/json" -d '{"steam_guard_code":"12345"}' http://127.0.0.1:8081/dota/connect
-curl -i -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/lobby
-curl -i -X POST -H "X-Api-Key: $KEY" -H "Content-Type: application/json" -d '{"steam_id":"76561198000000001"}' http://127.0.0.1:8081/dota/invite
+STEAM_GUARD_CODE="12345"
+curl -i -X POST \
+  -H "X-Api-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"steam_guard_code\":\"$STEAM_GUARD_CODE\"}" \
+  http://127.0.0.1:8081/dota/connect
 ```
 
-## Next project step
+Try lobby creation:
 
-Next Dota phase:
+```bash
+curl -i -X POST \
+  -H "X-Api-Key: $KEY" \
+  http://127.0.0.1:8081/dota/create-lobby
 
-1. Inspect `/dota/lobby` body while the account is actually inside a Dota lobby/party.
-2. Make backend Quick Invite use the verified real `/dota/invite` path in production mode.
-3. Improve Control Center Dota status UX for `connected`, `gc_started`, and `lobby_exists`.
-4. Keep the session alive across API calls while `streamer-proxy` process is running.
+curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:8081/dota/status
+echo
+```
+
+Try invite:
+
+```bash
+REAL_STEAM_ID="76561198807245109"
+curl -i -X POST \
+  -H "X-Api-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"steam_id\":\"$REAL_STEAM_ID\"}" \
+  http://127.0.0.1:8081/dota/invite
+```
+
+## Next investigation step
+
+The next assistant should continue from this exact blocker:
+
+```text
+Dota GC is ready, but create_practice_lobby does not produce lobby_new/lobby_changed and self._dota.lobby remains None.
+```
+
+Recommended next attempts:
+
+1. Inspect Dota GC connection/state handling in `dota2/client.py` and `features/sharedobjects.py`.
+2. Verify whether `client.games_played([570])` must be called before `Dota2Client.launch()`; a patch was proposed but not confirmed as applied/pushed at the time of this doc update.
+3. Add `client.games_played([570])` immediately after Steam login and before `Dota2Client(client).launch()` if not already present.
+4. Inspect whether `Dota2Client` needs `idle()`/gevent loop cooperation while waiting for SOCache updates.
+5. Consider using `self._dota.send_job(...)` / `wait_msg(...)` for create lobby if a response message exists, but source currently uses fire-and-forget `send` for `EMsgGCPracticeLobbyCreate`.
+6. Continue only after reading `docs/CURRENT_STATUS.md`, `docs/AI_NOTES.md`, `docs/project_context.md`, and `PROJECT_FILES.txt` from GitHub `main`.
 
 ## AI workflow rule
 
